@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../lib/supabase";
 
 function Beheer() {
   const navigate = useNavigate();
@@ -143,18 +143,13 @@ function Beheer() {
 
   return (
     <div style={stijlen.pagina}>
+      {/* Header */}
       <div style={stijlen.headerKaart}>
         <h1 style={stijlen.headerTitel}>⚙️ Beheer</h1>
         <p style={stijlen.headerSubtitel}>Gebruikers en koppelingen beheren</p>
-        <div style={stijlen.headerKaart}>
-          <h1 style={stijlen.headerTitel}>⚙️ Beheer</h1>
-          <p style={stijlen.headerSubtitel}>
-            Gebruikers en koppelingen beheren
-          </p>
-          <button style={stijlen.btnTerug} onClick={() => navigate(-1)}>
-            ← Terug
-          </button>
-        </div>
+        <button style={stijlen.btnTerug} onClick={() => navigate("/")}>
+          ← Terug naar hoofdpagina
+        </button>
       </div>
 
       {/* Tabs */}
@@ -198,7 +193,6 @@ function Beheer() {
       {/* Tab: Gebruikers */}
       {!laden && actieveTab === "gebruikers" && (
         <>
-          {/* Nieuw gebruiker formulier */}
           <div style={stijlen.kaart}>
             <h2 style={stijlen.kaartTitel}>Nieuwe gebruiker toevoegen</h2>
             <div style={stijlen.formRij}>
@@ -240,7 +234,6 @@ function Beheer() {
             </button>
           </div>
 
-          {/* Gebruikerslijst */}
           <div style={stijlen.kaart}>
             <h2 style={stijlen.kaartTitel}>
               Alle gebruikers ({gebruikers.length})
@@ -298,7 +291,6 @@ function Beheer() {
       {/* Tab: Koppelingen */}
       {!laden && actieveTab === "koppelingen" && (
         <>
-          {/* Nieuwe koppeling formulier */}
           <div style={stijlen.kaart}>
             <h2 style={stijlen.kaartTitel}>Nieuwe koppeling toevoegen</h2>
             <div style={stijlen.formRij}>
@@ -338,7 +330,6 @@ function Beheer() {
             </button>
           </div>
 
-          {/* Koppelingenlijst */}
           <div style={stijlen.kaart}>
             <h2 style={stijlen.kaartTitel}>
               Alle koppelingen ({koppelingen.length})
@@ -412,7 +403,21 @@ const stijlen = {
     color: "#1b5e20",
     marginBottom: "4px",
   },
-  headerSubtitel: { fontSize: "0.85rem", color: "#616161" },
+  headerSubtitel: {
+    fontSize: "0.85rem",
+    color: "#616161",
+    marginBottom: "12px",
+  },
+  btnTerug: {
+    padding: "6px 18px",
+    borderRadius: "50px",
+    background: "#eee",
+    color: "#616161",
+    border: "none",
+    fontSize: "0.85rem",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
   tabs: {
     maxWidth: "900px",
     margin: "0 auto 20px",
@@ -506,17 +511,6 @@ const stijlen = {
     color: "#fff",
     border: "none",
     fontSize: "0.875rem",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  btnTerug: {
-    marginTop: "12px",
-    padding: "6px 18px",
-    borderRadius: "50px",
-    background: "#eee",
-    color: "#616161",
-    border: "none",
-    fontSize: "0.85rem",
     fontWeight: "600",
     cursor: "pointer",
   },
