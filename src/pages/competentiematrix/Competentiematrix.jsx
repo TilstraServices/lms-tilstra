@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
 import LoginScherm from "../../components/shared/LoginScherm";
 import LeidinggevendeMenu from "../../components/competentiematrix/LeidinggevendeMenu";
@@ -17,15 +17,34 @@ function Competentiematrix({ rol = "trainee" }) {
   const [feedback, setFeedback] = useState(null);
   const [, setLaden] = useState(false);
 
+  useEffect(() => {
+    const email = localStorage.getItem("lms_email");
+    const rol = localStorage.getItem("lms_rol");
+
+    if (email && rol) {
+      supabase
+        .from("gebruikers")
+        .select("email, naam, rol")
+        .eq("email", email)
+        .single()
+        .then(({ data }) => {
+          if (data) handleIngelogd(data);
+        });
+    }
+  }, [handleIngelogd]);
+
   // ── Login ──
-  async function handleIngelogd(gevondenGebruiker) {
+  const handleIngelogd = useCallback(async (gevondenGebruiker) => {
     setGebruiker(gevondenGebruiker);
+    localStorage.setItem("lms_email", gevondenGebruiker.email);
+    localStorage.setItem("lms_rol", gevondenGebruiker.rol);
+
     if (gevondenGebruiker.rol === "leidinggevende") {
       setScherm("menu");
     } else {
       await openMatrix(gevondenGebruiker.email, gevondenGebruiker.naam);
     }
-  }
+  }, []);
 
   // ── Matrix openen ──
   async function openMatrix(email, naam, eigenModus = false) {
@@ -125,6 +144,8 @@ function Competentiematrix({ rol = "trainee" }) {
 
   // ── Uitloggen ──
   function handleUitloggen() {
+    localStorage.removeItem("lms_email");
+    localStorage.removeItem("lms_rol");
     setGebruiker(null);
     setScherm("login");
     setScores({});
