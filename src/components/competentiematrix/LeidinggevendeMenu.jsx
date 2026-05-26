@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 
 function LeidinggevendeMenu({
@@ -7,6 +8,7 @@ function LeidinggevendeMenu({
   onEigenMatrix,
   onUitloggen,
 }) {
+  const navigate = useNavigate();
   const [trainees, setTrainees] = useState([]);
   const [laden, setLaden] = useState(true);
 
@@ -69,8 +71,10 @@ function LeidinggevendeMenu({
           <span style={stijlen.pijl}>→</span>
         </div>
       ))}
-
       <div style={stijlen.footer}>
+        <button style={stijlen.btnBeheer} onClick={() => navigate("/beheer")}>
+          ⚙️ Beheer
+        </button>
         <span style={stijlen.uitloggen} onClick={onUitloggen}>
           ↩ Uitloggen
         </span>
@@ -137,6 +141,17 @@ const stijlen = {
     cursor: "pointer",
     marginBottom: "10px",
     boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+
+    btnBeheer: {
+      padding: "6px 18px",
+      borderRadius: "50px",
+      background: "#eee",
+      color: "#616161",
+      border: "none",
+      fontSize: "0.85rem",
+      fontWeight: "600",
+      cursor: "pointer",
+    },
   },
   naam: { fontWeight: "600", fontSize: "0.95rem", color: "#212121" },
   mail: { fontSize: "0.78rem", color: "#9e9e9e", marginTop: "2px" },
