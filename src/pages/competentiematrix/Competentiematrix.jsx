@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
-import LoginScherm from "../components/shared/LoginScherm";
-import LeidinggevendeMenu from "../components/competentiematrix/LeidinggevendeMenu";
-import MatrixTabel from "../components/competentiematrix/MatrixTabel";
-import RadarChart from "../components/competentiematrix/RadarChart";
-import GeschiedenisModal from "../components/competentiematrix/GeschiedenisModal";
+import { supabase } from "../../lib/supabase";
+import LoginScherm from "../../components/shared/LoginScherm";
+import LeidinggevendeMenu from "../../components/competentiematrix/LeidinggevendeMenu";
+import MatrixTabel from "../../components/competentiematrix/MatrixTabel";
+import RadarChart from "../../components/competentiematrix/RadarChart";
+import GeschiedenisModal from "../../components/competentiematrix/GeschiedenisModal";
 
 function Competentiematrix({ rol = "trainee" }) {
   const [gebruiker, setGebruiker] = useState(null);
