@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { jsPDF } from "jspdf";
 import { supabase } from "../../lib/supabase";
 import { MATRIX, RADAR_LABELS, RADAR_IDS } from "../../lib/matrix-data";
 import {
@@ -20,6 +21,140 @@ Chart.register(
   Tooltip,
 );
 
+function formatDatum(iso) {
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString("nl-NL", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }) +
+    " om " +
+    d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
+  );
+}
+
+function exporteerPDF(snapshot, email) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const groen = [46, 125, 50];
+  const grijs = [97, 97, 97];
+  const paginaBreedte = 210;
+  const marge = 16;
+  let y = 20;
+
+  doc.setFillColor(...groen);
+  doc.rect(0, 0, paginaBreedte, 28, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("Competentiematrix – Junior Payroll Professional", marge, 12);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    `Snapshot: ${formatDatum(snapshot.opgeslagen_op)}  |  Opgeslagen door: ${snapshot.opgeslagen_door}`,
+    marge,
+    20,
+  );
+  doc.text(`Trainee: ${email}`, marge, 25);
+  y = 38;
+
+  const sc = snapshot.scores;
+  const scoreKleuren = {
+    1: "#c8e6c9",
+    2: "#81c784",
+    3: "#4caf50",
+    4: "#388e3c",
+    5: "#2e7d32",
+    6: "#1b5e20",
+  };
+
+  MATRIX.forEach((blok) => {
+    if (y > 260) {
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.setFillColor(...groen);
+    doc.rect(marge, y, paginaBreedte - marge * 2, 7, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text(blok.competentie, marge + 3, y + 5);
+    y += 9;
+
+    doc.setFillColor(245, 245, 245);
+    doc.rect(marge, y, paginaBreedte - marge * 2, 6, "F");
+    doc.setTextColor(...grijs);
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.text("INDICATOR", marge + 3, y + 4.2);
+    doc.text("PTA", marge + 120, y + 4.2);
+    doc.text("EVALUATIE", marge + 145, y + 4.2);
+    y += 7;
+
+    blok.indicatoren.forEach((ind, i) => {
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+      if (i % 2 === 0) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(marge, y, paginaBreedte - marge * 2, 7, "F");
+      }
+      doc.setTextColor(33, 33, 33);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(ind.naam, marge + 3, y + 4.8);
+
+      const s = sc[ind.id] || {};
+
+      if (s.pta) {
+        const kleur = scoreKleuren[s.pta];
+        doc.setFillColor(
+          parseInt(kleur.slice(1, 3), 16),
+          parseInt(kleur.slice(3, 5), 16),
+          parseInt(kleur.slice(5, 7), 16),
+        );
+        doc.circle(marge + 122, y + 3.5, 3, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.text(String(s.pta), marge + 120.8, y + 4.8);
+      }
+      if (s.evaluatie) {
+        const kleur = scoreKleuren[s.evaluatie];
+        doc.setFillColor(
+          parseInt(kleur.slice(1, 3), 16),
+          parseInt(kleur.slice(3, 5), 16),
+          parseInt(kleur.slice(5, 7), 16),
+        );
+        doc.circle(marge + 148, y + 3.5, 3, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "bold");
+        doc.text(String(s.evaluatie), marge + 146.8, y + 4.8);
+      }
+      doc.setDrawColor(230, 230, 230);
+      doc.line(marge, y + 7, paginaBreedte - marge, y + 7);
+      y += 7;
+    });
+    y += 4;
+  });
+
+  doc.setFontSize(7);
+  doc.setTextColor(...grijs);
+  doc.text(
+    `Gegenereerd op ${new Date().toLocaleDateString("nl-NL")} | Tilstra Services`,
+    marge,
+    290,
+  );
+
+  const datum = new Date(snapshot.opgeslagen_op)
+    .toLocaleDateString("nl-NL")
+    .replace(/\//g, "-");
+  doc.save(`Competentiematrix_${email}_${datum}.pdf`);
+}
+
 function GeschiedenisModal({ email, onSluit }) {
   const [snapshots, setSnapshots] = useState([]);
   const [laden, setLaden] = useState(true);
@@ -29,7 +164,7 @@ function GeschiedenisModal({ email, onSluit }) {
     async function laadSnapshots() {
       const { data, error } = await supabase
         .from("snapshots")
-        .select("id, opgeslagen_door, opgeslagen_op, scores")
+        .select("id, opgeslagen_door, opgeslagen_op, scores, trainee_email")
         .eq("trainee_email", email)
         .order("opgeslagen_op", { ascending: false });
 
@@ -39,19 +174,6 @@ function GeschiedenisModal({ email, onSluit }) {
 
     laadSnapshots();
   }, [email]);
-
-  function formatDatum(iso) {
-    const d = new Date(iso);
-    return (
-      d.toLocaleDateString("nl-NL", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }) +
-      " om " +
-      d.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
-    );
-  }
 
   return (
     <div style={stijlen.overlay} onClick={onSluit}>
@@ -103,7 +225,10 @@ function GeschiedenisModal({ email, onSluit }) {
               </div>
 
               {actiefIndex !== null && (
-                <SnapshotDetail snapshot={snapshots[actiefIndex]} />
+                <SnapshotDetail
+                  snapshot={snapshots[actiefIndex]}
+                  email={email}
+                />
               )}
             </>
           )}
@@ -113,7 +238,7 @@ function GeschiedenisModal({ email, onSluit }) {
   );
 }
 
-function SnapshotDetail({ snapshot }) {
+function SnapshotDetail({ snapshot, email }) {
   const sc = snapshot.scores;
 
   return (
@@ -162,6 +287,15 @@ function SnapshotDetail({ snapshot }) {
           ))}
         </tbody>
       </table>
+
+      <div style={stijlen.exportBalk}>
+        <button
+          style={stijlen.btnPrimair}
+          onClick={() => exporteerPDF(snapshot, email)}
+        >
+          ⬇ Exporteer PDF
+        </button>
+      </div>
     </div>
   );
 }
@@ -372,6 +506,24 @@ const stijlen = {
   rij: { borderBottom: "1px solid #eee" },
   indicatorTd: { padding: "7px 12px" },
   leeg: { color: "#e0e0e0", fontSize: "0.8rem" },
+  exportBalk: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "10px",
+    padding: "16px 0 0",
+    borderTop: "1px solid #eee",
+    marginTop: "16px",
+  },
+  btnPrimair: {
+    padding: "10px 24px",
+    borderRadius: "50px",
+    background: "#2e7d32",
+    color: "#fff",
+    border: "none",
+    fontSize: "0.875rem",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
 };
 
 export default GeschiedenisModal;
