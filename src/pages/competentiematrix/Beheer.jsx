@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 function Beheer() {
+  const navigate = useNavigate();
   const [gebruikers, setGebruikers] = useState([]);
   const [koppelingen, setKoppelingen] = useState([]);
   const [laden, setLaden] = useState(true);
@@ -144,6 +146,15 @@ function Beheer() {
       <div style={stijlen.headerKaart}>
         <h1 style={stijlen.headerTitel}>⚙️ Beheer</h1>
         <p style={stijlen.headerSubtitel}>Gebruikers en koppelingen beheren</p>
+        <div style={stijlen.headerKaart}>
+          <h1 style={stijlen.headerTitel}>⚙️ Beheer</h1>
+          <p style={stijlen.headerSubtitel}>
+            Gebruikers en koppelingen beheren
+          </p>
+          <button style={stijlen.btnTerug} onClick={() => navigate(-1)}>
+            ← Terug
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -495,6 +506,17 @@ const stijlen = {
     color: "#fff",
     border: "none",
     fontSize: "0.875rem",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+  btnTerug: {
+    marginTop: "12px",
+    padding: "6px 18px",
+    borderRadius: "50px",
+    background: "#eee",
+    color: "#616161",
+    border: "none",
+    fontSize: "0.85rem",
     fontWeight: "600",
     cursor: "pointer",
   },
