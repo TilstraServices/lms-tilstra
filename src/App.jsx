@@ -1,4 +1,4 @@
-import Competentiematrix from "./pages/Competentiematrix";
+import Competentiematrix from "./pages/competentiematrix/Competentiematrix";
 import "./index.css";
 
 function App() {
