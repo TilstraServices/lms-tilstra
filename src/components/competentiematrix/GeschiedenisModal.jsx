@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, forwardRef } from "react";
 import { jsPDF } from "jspdf";
 import { supabase } from "../../lib/supabase";
 import { MATRIX, RADAR_LABELS, RADAR_IDS } from "../../lib/matrix-data";
@@ -34,7 +34,7 @@ function formatDatum(iso) {
   );
 }
 
-function exporteerPDF(snapshot, email) {
+function exporteerPDF(snapshot, email, canvas) {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const groen = [46, 125, 50];
   const grijs = [97, 97, 97];
@@ -57,6 +57,33 @@ function exporteerPDF(snapshot, email) {
   );
   doc.text(`Trainee: ${email}`, marge, 25);
   y = 38;
+
+  // Radar chart als afbeelding
+  if (canvas) {
+    const imgData = canvas.toDataURL("image/png");
+    const radarH = 90;
+    const radarW = 120;
+    doc.addImage(
+      imgData,
+      "PNG",
+      (paginaBreedte - radarW) / 2,
+      y,
+      radarW,
+      radarH,
+    );
+    y += radarH + 8;
+
+    // Legenda
+    doc.setFontSize(8);
+    doc.setTextColor(...grijs);
+    doc.setFillColor(21, 101, 192);
+    doc.rect(marge, y, 12, 2, "F");
+    doc.text("PTA (trainee)", marge + 14, y + 1.5);
+    doc.setFillColor(198, 40, 40);
+    doc.rect(marge + 50, y, 12, 2, "F");
+    doc.text("Evaluatie (begeleider)", marge + 64, y + 1.5);
+    y += 8;
+  }
 
   const sc = snapshot.scores;
   const scoreKleuren = {
@@ -240,11 +267,16 @@ function GeschiedenisModal({ email, onSluit }) {
 
 function SnapshotDetail({ snapshot, email }) {
   const sc = snapshot.scores;
+  const radarRef = useRef(null);
+
+  function handleExport() {
+    exporteerPDF(snapshot, email, radarRef.current);
+  }
 
   return (
     <div style={stijlen.detail}>
       <h3 style={stijlen.detailTitel}>Ontwikkelprofiel</h3>
-      <SnapshotRadar scores={sc} />
+      <SnapshotRadar scores={sc} ref={radarRef} />
       <table style={stijlen.tabel}>
         <thead>
           <tr>
@@ -289,10 +321,7 @@ function SnapshotDetail({ snapshot, email }) {
       </table>
 
       <div style={stijlen.exportBalk}>
-        <button
-          style={stijlen.btnPrimair}
-          onClick={() => exporteerPDF(snapshot, email)}
-        >
+        <button style={stijlen.btnPrimair} onClick={handleExport}>
           ⬇ Exporteer PDF
         </button>
       </div>
@@ -300,7 +329,7 @@ function SnapshotDetail({ snapshot, email }) {
   );
 }
 
-function SnapshotRadar({ scores }) {
+const SnapshotRadar = forwardRef(function SnapshotRadar({ scores }, ref) {
   const canvasRef = useRef(null);
   const chartRef = useRef(null);
 
@@ -374,10 +403,17 @@ function SnapshotRadar({ scores }) {
     <div
       style={{ display: "flex", justifyContent: "center", margin: "16px 0" }}
     >
-      <canvas ref={canvasRef} width={560} height={440} />
+      <canvas
+        ref={(el) => {
+          canvasRef.current = el;
+          if (ref) ref.current = el;
+        }}
+        width={560}
+        height={440}
+      />
     </div>
   );
-}
+});
 
 function ScorePill({ waarde }) {
   const kleuren = {
