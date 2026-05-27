@@ -12,7 +12,7 @@ function Competentiematrix({
   toonUitloggen = true,
 }) {
   const [gebruiker, setGebruiker] = useState(null);
-  const [scherm, setScherm] = useState("login");
+  const [scherm, setScherm] = useState(emailProp ? "laden" : "login");
   const [traineeEmail, setTraineeEmail] = useState(null);
   const [traineeNaam, setTraineeNaam] = useState(null);
   const [eigenMatrixModus, setEigenMatrixModus] = useState(false);
@@ -23,8 +23,9 @@ function Competentiematrix({
 
   // ── State declaraties ──
   useEffect(() => {
-    if (emailProp && rol === "trainee") {
-      openMatrix(emailProp, emailProp);
+    if (emailProp) {
+      const eigenModus = rol === "trainee";
+      openMatrix(emailProp, emailProp, eigenModus);
     }
   }, [emailProp, rol]);
 
@@ -243,7 +244,7 @@ function Competentiematrix({
       <MatrixTabel
         scores={scores}
         onScoreWijzig={handleScoreWijzig}
-        rol={gebruiker?.rol || "trainee"}
+        rol={gebruiker?.rol || rol || "trainee"}
         eigenMatrixModus={eigenMatrixModus}
       />
 
