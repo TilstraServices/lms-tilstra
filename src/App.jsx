@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Competentiematrix from "./pages/competentiematrix/Competentiematrix";
 import Beheer from "./pages/competentiematrix/Beheer";
+import TraineeDashboard from "./pages/dashboard/trainee/Dashboard";
+import LeidinggevendeDashboard from "./pages/dashboard/leidinggevende/Dashboard";
+import BeheerDashboard from "./pages/dashboard/beheer/Dashboard";
 import "./index.css";
 
 function App() {
@@ -12,6 +15,12 @@ function App() {
       <Routes>
         <Route path="/" element={<Competentiematrix rol={rol} />} />
         <Route path="/beheer" element={<Beheer />} />
+        <Route path="/dashboard/trainee" element={<TraineeDashboard />} />
+        <Route
+          path="/dashboard/leidinggevende"
+          element={<LeidinggevendeDashboard />}
+        />
+        <Route path="/dashboard/beheer" element={<BeheerDashboard />} />
       </Routes>
     </BrowserRouter>
   );
