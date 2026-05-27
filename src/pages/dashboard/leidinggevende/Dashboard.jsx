@@ -1,7 +1,35 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { haalRolOp } from "../../../lib/auth";
 
 export default function LeidinggevendeDashboard() {
   const [email, setEmail] = useState(() => localStorage.getItem("email"));
+  const [fout, setFout] = useState(null);
+  const [laden, setLaden] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleLogin(ingevoerdEmail) {
+    setLaden(true);
+    setFout(null);
+    const rol = await haalRolOp(ingevoerdEmail);
+
+    if (!rol) {
+      setFout("Dit e-mailadres is niet bekend in het systeem.");
+      setLaden(false);
+      return;
+    }
+
+    localStorage.setItem("email", ingevoerdEmail);
+    setEmail(ingevoerdEmail);
+
+    if (rol === "trainee") {
+      navigate("/dashboard/trainee");
+    } else if (rol === "beheerder") {
+      navigate("/dashboard/beheer");
+    }
+
+    setLaden(false);
+  }
 
   if (!email) {
     return (
@@ -12,11 +40,12 @@ export default function LeidinggevendeDashboard() {
           placeholder="Jouw e-mailadres"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
-              localStorage.setItem("email", e.target.value);
-              setEmail(e.target.value);
+              handleLogin(e.target.value);
             }
           }}
         />
+        {laden && <p>Bezig met inloggen...</p>}
+        {fout && <p style={{ color: "red" }}>{fout}</p>}
         <p>Druk op Enter om in te loggen</p>
       </div>
     );
