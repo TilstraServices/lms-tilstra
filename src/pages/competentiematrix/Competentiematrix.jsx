@@ -6,7 +6,11 @@ import MatrixTabel from "../../components/competentiematrix/MatrixTabel";
 import RadarChart from "../../components/competentiematrix/RadarChart";
 import GeschiedenisModal from "../../components/competentiematrix/GeschiedenisModal";
 
-function Competentiematrix({ rol = "trainee" }) {
+function Competentiematrix({
+  rol = "trainee",
+  emailProp = null,
+  toonUitloggen = true,
+}) {
   const [gebruiker, setGebruiker] = useState(null);
   const [scherm, setScherm] = useState("login");
   const [traineeEmail, setTraineeEmail] = useState(null);
@@ -16,6 +20,13 @@ function Competentiematrix({ rol = "trainee" }) {
   const [geschiedenisOpen, setGeschiedenisOpen] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [, setLaden] = useState(false);
+
+  // ── State declaraties ──
+  useEffect(() => {
+    if (emailProp && rol === "trainee") {
+      openMatrix(emailProp, emailProp);
+    }
+  }, [emailProp, rol]);
 
   // ── Matrix openen ──
   async function openMatrix(email, naam, eigenModus = false) {
@@ -250,12 +261,14 @@ function Competentiematrix({ rol = "trainee" }) {
         <button style={stijlen.btnPrimair} onClick={handleOpslaan}>
           Opslaan ✓
         </button>
-        <button
-          style={{ ...stijlen.btnSecundair, marginLeft: "auto" }}
-          onClick={handleUitloggen}
-        >
-          ↩ Uitloggen
-        </button>
+        {toonUitloggen && (
+          <button
+            style={{ ...stijlen.btnSecundair, marginLeft: "auto" }}
+            onClick={handleUitloggen}
+          >
+            ↩ Uitloggen
+          </button>
+        )}
       </div>
 
       {/* Feedback */}
