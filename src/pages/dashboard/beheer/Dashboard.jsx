@@ -48,7 +48,7 @@ export default function BeheerDashboard() {
         </svg>
       ),
       blok: <p>Dashboard blok komt hier</p>,
-      sectie: "Menu",
+      sectie: "Beheer",
     },
     {
       label: "Modules",
@@ -64,7 +64,7 @@ export default function BeheerDashboard() {
         </svg>
       ),
       blok: <p>Modules blok komt hier</p>,
-      sectie: "Menu",
+      sectie: "Beheer",
     },
     {
       label: "Gebruikers",
@@ -80,7 +80,7 @@ export default function BeheerDashboard() {
         </svg>
       ),
       blok: <p>Gebruikers blok komt hier</p>,
-      sectie: "Menu",
+      sectie: "Beheer",
     },
     {
       label: "Sjablonen",
@@ -96,7 +96,7 @@ export default function BeheerDashboard() {
         </svg>
       ),
       blok: <p>Sjablonen blok komt hier</p>,
-      sectie: "Menu",
+      sectie: "Beheer",
     },
     {
       label: "Instellingen",
