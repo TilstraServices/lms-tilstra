@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { haalGebruikerOp } from "../lib/auth";
+import "./dashboard/dashboard.css";
 
 export default function Start() {
   const [fout, setFout] = useState(null);
@@ -58,7 +59,7 @@ export default function Start() {
   }
 
   return (
-    <div className="dashboard-login">
+    <div className="login-scherm">
       <h1>Tilstra LMS</h1>
       <h2>Inloggen</h2>
       <input
