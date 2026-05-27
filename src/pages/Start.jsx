@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { haalRolOp } from "../lib/auth";
+import { haalGebruikerOp } from "../lib/auth";
 
 export default function Start() {
   const [fout, setFout] = useState(null);
@@ -13,17 +13,21 @@ export default function Start() {
 
     async function stuurDoor() {
       setLaden(true);
-      const rol = await haalRolOp(opgeslagenEmail);
+      const gebruiker = await haalGebruikerOp(opgeslagenEmail);
 
-      if (!rol) {
+      if (!gebruiker) {
         localStorage.removeItem("email");
+        localStorage.removeItem("naam");
         setLaden(false);
         return;
       }
 
-      if (rol === "trainee") navigate("/dashboard/trainee");
-      else if (rol === "leidinggevende") navigate("/dashboard/leidinggevende");
-      else if (rol === "beheerder") navigate("/dashboard/beheer");
+      localStorage.setItem("naam", gebruiker.naam);
+
+      if (gebruiker.rol === "trainee") navigate("/dashboard/trainee");
+      else if (gebruiker.rol === "leidinggevende")
+        navigate("/dashboard/leidinggevende");
+      else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
     }
 
     stuurDoor();
@@ -32,19 +36,21 @@ export default function Start() {
   async function handleLogin(ingevoerdEmail) {
     setLaden(true);
     setFout(null);
-    const rol = await haalRolOp(ingevoerdEmail);
+    const gebruiker = await haalGebruikerOp(ingevoerdEmail);
 
-    if (!rol) {
+    if (!gebruiker) {
       setFout("Dit e-mailadres is niet bekend in het systeem.");
       setLaden(false);
       return;
     }
 
     localStorage.setItem("email", ingevoerdEmail);
+    localStorage.setItem("naam", gebruiker.naam);
 
-    if (rol === "trainee") navigate("/dashboard/trainee");
-    else if (rol === "leidinggevende") navigate("/dashboard/leidinggevende");
-    else if (rol === "beheerder") navigate("/dashboard/beheer");
+    if (gebruiker.rol === "trainee") navigate("/dashboard/trainee");
+    else if (gebruiker.rol === "leidinggevende")
+      navigate("/dashboard/leidinggevende");
+    else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
   }
 
   if (laden) {

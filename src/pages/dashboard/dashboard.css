@@ -1,0 +1,491 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --groen: #2e7d32;
+  --groen-licht: #e8f5e9;
+  --groen-mid: #4caf50;
+  --groen-donker: #1b5e20;
+  --grijs-50: #fafafa;
+  --grijs-100: #f5f5f5;
+  --grijs-200: #eeeeee;
+  --grijs-300: #e0e0e0;
+  --grijs-500: #9e9e9e;
+  --grijs-700: #616161;
+  --grijs-900: #212121;
+  --rood: #c62828;
+  --rood-licht: #ffebee;
+  --oranje: #e65100;
+  --oranje-licht: #fff3e0;
+  --blauw: #1565c0;
+  --blauw-licht: #e3f2fd;
+  --radius: 10px;
+  --schaduw: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  --mod-payroll: #1565c0;
+  --mod-payroll-licht: #e3f2fd;
+  --mod-arbeidsrecht: #6a1b9a;
+  --mod-arbeidsrecht-licht: #f3e5f5;
+  --mod-cao: #00695c;
+  --mod-cao-licht: #e0f2f1;
+  --mod-verloning: #e65100;
+  --mod-verloning-licht: #fff3e0;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background: var(--grijs-100);
+  color: var(--grijs-900);
+  min-height: 100vh;
+}
+
+/* ── Layout ── */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  flex-direction: row;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  order: -1;
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--groen);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0 32px;
+  transition: width 0.25s ease;
+  overflow: visible;
+  position: relative;
+}
+.sidebar.ingeklapt {
+  width: 56px;
+}
+
+.sidebar-logo {
+  padding: 0 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  min-height: 72px;
+  text-align: left;
+}
+
+.sidebar-logo-tekst {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.sidebar-logo-sub {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 2px;
+}
+.sidebar.ingeklapt .sidebar-logo-tekst,
+.sidebar.ingeklapt .sidebar-logo-sub {
+  display: none;
+}
+
+/* Toggle bolletje */
+.sidebar-toggle {
+  position: absolute;
+  top: 66.67%;
+  right: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--groen);
+  border: 2px solid #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 50;
+}
+.sidebar-toggle:hover {
+  background: var(--groen-donker);
+}
+.sidebar-toggle:hover {
+  background: var(--groen-donker);
+}
+.sidebar-toggle.ingeklapt {
+  left: calc(56px - 14px);
+}
+.sidebar-inhoud {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Navigatie */
+.sidebar-nav {
+  padding: 16px 12px;
+  flex: 1;
+  overflow: hidden;
+}
+.sidebar.ingeklapt .sidebar-nav {
+  padding: 16px 8px;
+}
+
+.nav-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0 8px;
+  margin: 16px 0 6px;
+  white-space: nowrap;
+  min-height: 18px;
+}
+
+.nav-label:first-child {
+  margin-top: 0;
+}
+.sidebar.ingeklapt .nav-label {
+  visibility: hidden;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: background 0.12s;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  width: 100%;
+  font-family: "Inter", sans-serif;
+  text-align: left;
+}
+.sidebar.ingeklapt .nav-item {
+  padding: 8px;
+  justify-content: center;
+  gap: 0;
+}
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.nav-item.actief {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-weight: 600;
+}
+
+.nav-tekst {
+  transition: opacity 0.15s;
+}
+.sidebar.ingeklapt .nav-tekst {
+  display: none;
+}
+.nav-icon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Sidebar footer */
+.sidebar-footer {
+  padding: 0 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 16px;
+  overflow: hidden;
+}
+.sidebar.ingeklapt .sidebar-footer {
+  padding: 0 8px;
+  padding-top: 16px;
+}
+
+.sidebar-gebruiker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.sidebar.ingeklapt .sidebar-gebruiker {
+  justify-content: center;
+  padding: 8px;
+  gap: 0;
+}
+.sidebar.ingeklapt .gebruiker-info {
+  display: none;
+}
+
+/* Avatar */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--groen-licht);
+  color: var(--groen-donker);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Hoofdinhoud ── */
+.hoofd {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 32px 60px;
+}
+
+/* ── Topbar ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.topbar-titel {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--groen-donker);
+}
+.topbar-sub {
+  font-size: 0.83rem;
+  color: var(--grijs-700);
+  margin-top: 2px;
+}
+
+/* ── Kaart ── */
+.kaart {
+  background: #fff;
+  border: 1px solid var(--grijs-200);
+  border-radius: var(--radius);
+  box-shadow: var(--schaduw);
+  padding: 20px 24px;
+}
+.kaart-accent {
+  border-left: 5px solid var(--groen);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+/* ── Stat kaarten ── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-kaart {
+  background: #fff;
+  border: 1px solid var(--grijs-200);
+  border-radius: var(--radius);
+  box-shadow: var(--schaduw);
+  padding: 16px 20px;
+}
+.stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--grijs-500);
+  margin-bottom: 6px;
+}
+.stat-waarde {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--groen-donker);
+  line-height: 1;
+}
+.stat-sub {
+  font-size: 0.78rem;
+  color: var(--grijs-700);
+  margin-top: 4px;
+}
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-groen {
+  background: var(--groen-licht);
+  color: var(--groen-donker);
+}
+.badge-rood {
+  background: var(--rood-licht);
+  color: var(--rood);
+}
+.badge-oranje {
+  background: var(--oranje-licht);
+  color: var(--oranje);
+}
+.badge-grijs {
+  background: var(--grijs-200);
+  color: var(--grijs-700);
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-groen {
+  background: var(--groen);
+}
+.dot-oranje {
+  background: var(--oranje);
+}
+.dot-grijs {
+  background: var(--grijs-500);
+}
+
+/* ── Voortgangsbalk ── */
+.vb-wrap {
+  background: var(--grijs-200);
+  border-radius: 50px;
+  height: 7px;
+  overflow: hidden;
+}
+.vb {
+  height: 100%;
+  border-radius: 50px;
+  background: var(--groen);
+}
+
+/* ── Tabel ── */
+.tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.tabel th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--grijs-500);
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--grijs-200);
+}
+.tabel td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--grijs-200);
+  vertical-align: middle;
+}
+.tabel tr:last-child td {
+  border-bottom: none;
+}
+.tabel tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.tabel tbody tr:hover td {
+  background: var(--grijs-50);
+}
+
+/* ── Knoppen ── */
+.knop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 18px;
+  border-radius: 50px;
+  font-family: "Inter", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+.knop-primair {
+  background: var(--groen);
+  color: #fff;
+}
+.knop-primair:hover {
+  background: var(--groen-donker);
+}
+.knop-ghost {
+  background: var(--grijs-200);
+  color: var(--grijs-700);
+}
+.knop-ghost:hover {
+  background: var(--grijs-300);
+}
+.knop-gevaar {
+  background: var(--rood-licht);
+  color: var(--rood);
+}
+.knop-gevaar:hover {
+  opacity: 0.85;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--grijs-200);
+  margin: 16px 0;
+}
+
+/* ── Inlogscherm ── */
+.login-scherm {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--grijs-100);
+  font-family: "Inter", sans-serif;
+  gap: 16px;
+}
+.login-scherm h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--groen);
+}
+.login-scherm h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--grijs-900);
+}
+.login-scherm input {
+  padding: 12px 20px;
+  border: 1px solid var(--grijs-200);
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-family: "Inter", sans-serif;
+  width: 320px;
+  outline: none;
+  box-shadow: var(--schaduw);
+}
+.login-scherm input:focus {
+  border-color: var(--groen);
+}
+.login-scherm p {
+  font-size: 0.82rem;
+  color: var(--grijs-500);
+}
