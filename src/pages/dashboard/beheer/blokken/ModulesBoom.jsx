@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../../lib/supabase";
 
-// ── Iconen ──
 const IcoModule = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -13,7 +12,6 @@ const IcoModule = () => (
     <path d="M224,48H32A16,16,0,0,0,16,64V88a16,16,0,0,0,16,16v88a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V104a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM208,192H48V104H208ZM224,88H32V64H224V88ZM96,136a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,136Z" />
   </svg>
 );
-
 const IcoHoofdstuk = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -25,7 +23,6 @@ const IcoHoofdstuk = () => (
     <path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z" />
   </svg>
 );
-
 const IcoParagraaf = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -37,7 +34,6 @@ const IcoParagraaf = () => (
     <path d="M120,176V64h16V176a8,8,0,0,1-16,0Zm-16-96H72a48,48,0,0,0,0,96h32a8,8,0,0,0,0-16H72a32,32,0,0,1,0-64h32a8,8,0,0,0,0-16Z" />
   </svg>
 );
-
 const IcoQuiz = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -49,7 +45,6 @@ const IcoQuiz = () => (
     <path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM208,208H48V48H208ZM96,136a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,136Zm0-32a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,104Zm0,64a8,8,0,0,1,8-8h24a8,8,0,0,1,0,16H104A8,8,0,0,1,96,168Z" />
   </svg>
 );
-
 const IcoOpgave = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -62,7 +57,6 @@ const IcoOpgave = () => (
   </svg>
 );
 
-// ── Boom item ──
 function BoomItem({
   icoon,
   naam,
@@ -71,16 +65,15 @@ function BoomItem({
   onClick,
   kinderen,
   accentKleur,
+  isOpen,
+  onToggle,
 }) {
-  const [open, setOpen] = useState(false);
-
   const inspringing = niveau * 20;
-
   return (
     <div>
       <div
         onClick={() => {
-          setOpen(!open);
+          onToggle && onToggle();
           onClick && onClick();
         }}
         style={{
@@ -105,7 +98,7 @@ function BoomItem({
           if (!actief) e.currentTarget.style.background = "none";
         }}
       >
-        {kinderen && (
+        {kinderen ? (
           <span
             style={{
               fontSize: "0.6rem",
@@ -113,10 +106,11 @@ function BoomItem({
               width: "10px",
             }}
           >
-            {open ? "▼" : "▶"}
+            {isOpen ? "▼" : "▶"}
           </span>
+        ) : (
+          <span style={{ width: "10px" }} />
         )}
-        {!kinderen && <span style={{ width: "10px" }} />}
         <span
           style={{
             color: accentKleur || "var(--grijs-500)",
@@ -136,12 +130,11 @@ function BoomItem({
           {naam}
         </span>
       </div>
-      {open && kinderen && <div>{kinderen}</div>}
+      {isOpen && kinderen && <div>{kinderen}</div>}
     </div>
   );
 }
 
-// ── Paneel ──
 function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
   const [bewerkModus, setBewerkModus] = useState(false);
   const [naam, setNaam] = useState(geselecteerd?.naam || "");
@@ -208,19 +201,79 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
     hoofdstuk: { type: "paragraaf", tabel: "paragrafen" },
     paragraaf: { type: "opgave", tabel: "opgaves" },
   };
-
   const kindInfo = kindLabels[geselecteerd.type];
 
   return (
     <div style={{ padding: "20px" }} className="uitklap-animatie">
-      {/* Titel + iconen */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           marginBottom: "20px",
         }}
       >
+        {geselecteerd.type !== "module" && (
+          <button
+            onClick={() => {
+              let ouder = null;
+              if (geselecteerd.type === "hoofdstuk") {
+                ouder = data.modules.find(
+                  (m) => m.id === geselecteerd.module_id,
+                );
+                if (ouder)
+                  ouder = { ...ouder, type: "module", tabel: "modules" };
+              } else if (
+                geselecteerd.type === "paragraaf" ||
+                geselecteerd.type === "quiz"
+              ) {
+                ouder = data.hoofdstukken.find(
+                  (h) => h.id === geselecteerd.hoofdstuk_id,
+                );
+                if (ouder)
+                  ouder = {
+                    ...ouder,
+                    type: "hoofdstuk",
+                    tabel: "hoofdstukken",
+                  };
+              } else if (geselecteerd.type === "opgave") {
+                ouder = data.paragrafen.find(
+                  (p) => p.id === geselecteerd.paragraaf_id,
+                );
+                if (ouder)
+                  ouder = { ...ouder, type: "paragraaf", tabel: "paragrafen" };
+              }
+              if (ouder) onSelecteer(ouder);
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "6px",
+              borderRadius: "50%",
+              color: "var(--grijs-500)",
+              display: "flex",
+              alignItems: "center",
+              marginRight: "8px",
+              marginTop: "2px",
+              transition: "background 0.15s",
+              flexShrink: 0,
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "var(--grijs-200)")
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              fill="currentColor"
+              viewBox="0 0 256 256"
+            >
+              <path d="M152,72H128V32a8,8,0,0,0-13.66-5.66l-96,96a8,8,0,0,0,0,11.32l96,96A8,8,0,0,0,128,224V184h24a8,8,0,0,0,8-8V80A8,8,0,0,0,152,72Zm-8,96H120a8,8,0,0,0-8,8v28.69L35.31,128,112,51.31V80a8,8,0,0,0,8,8h24Zm80-88v96a8,8,0,0,1-16,0V80a8,8,0,0,1,16,0Zm-32,0v96a8,8,0,0,1-16,0V80a8,8,0,0,1,16,0Z" />
+            </svg>
+          </button>
+        )}
         <div>
           <p
             style={{
@@ -307,7 +360,6 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
         </div>
       </div>
 
-      {/* Bewerk formulier */}
       {bewerkModus && (
         <div
           className="uitklap-animatie"
@@ -431,7 +483,6 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
         }}
       />
 
-      {/* Kinderen lijst */}
       {kindInfo && (
         <>
           <p
@@ -448,7 +499,6 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               ? "Paragrafen & Quiz"
               : kindInfo.type + "en"}
           </p>
-
           {kinderen.length === 0 ? (
             <p
               style={{
@@ -481,7 +531,6 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                 );
                 const type = isQuiz ? "quiz" : kindInfo.type;
                 const tabel = isQuiz ? "quizen" : kindInfo.tabel;
-
                 return (
                   <div
                     key={kind.id}
@@ -523,7 +572,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                       height="16"
                       fill="currentColor"
                       viewBox="0 0 256 256"
-                      style={{ color: "var(--grijs-400)" }}
+                      style={{ color: "var(--grijs-400)", marginLeft: "auto" }}
                     >
                       <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z" />
                     </svg>
@@ -532,7 +581,6 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               })}
             </div>
           )}
-
           <NieuwItemFormulier
             geselecteerd={geselecteerd}
             onHerlaad={onHerlaad}
@@ -543,7 +591,6 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
   );
 }
 
-// ── Nieuw item formulier ──
 function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
   const [naam, setNaam] = useState("");
   const [toonFormulier, setToonFormulier] = useState(false);
@@ -553,7 +600,6 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
     hoofdstuk: { label: "paragraaf of quiz", opties: ["paragraaf", "quiz"] },
     paragraaf: { label: "opgave", tabel: "opgaves", veld: "paragraaf_id" },
   };
-
   const kind = kindTypes[geselecteerd.type];
   if (!kind) return null;
 
@@ -561,12 +607,10 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
     if (!naam.trim()) return;
     let tabel = kind.tabel;
     let veld = kind.veld;
-
     if (geselecteerd.type === "hoofdstuk") {
       tabel = type === "quiz" ? "quizen" : "paragrafen";
       veld = "hoofdstuk_id";
     }
-
     await supabase
       .from(tabel)
       .insert({ naam, [veld]: geselecteerd.id, volgorde: 0 });
@@ -649,7 +693,6 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
   );
 }
 
-// ── Hoofdcomponent ──
 export default function ModulesBoom() {
   const [data, setData] = useState({
     modules: [],
@@ -660,6 +703,7 @@ export default function ModulesBoom() {
   });
   const [geselecteerd, setGeselecteerd] = useState(null);
   const [laden, setLaden] = useState(true);
+  const [openItems, setOpenItems] = useState({});
 
   useEffect(() => {
     laadAlles();
@@ -674,7 +718,6 @@ export default function ModulesBoom() {
         supabase.from("quizen").select("*").order("volgorde"),
         supabase.from("opgaves").select("*").order("volgorde"),
       ]);
-
     setData({
       modules: modules.data || [],
       hoofdstukken: hoofdstukken.data || [],
@@ -685,8 +728,20 @@ export default function ModulesBoom() {
     setLaden(false);
   }
 
-  function selecteer(item) {
+  function toggleOpen(id) {
+    setOpenItems((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  function selecteer(item, ouders = []) {
     setGeselecteerd(item);
+    // Open alle ouders automatisch
+    const nieuweOpenItems = { ...openItems };
+    ouders.forEach((id) => {
+      nieuweOpenItems[id] = true;
+    });
+    // Open het item zelf ook als het kinderen heeft
+    nieuweOpenItems[item.id] = true;
+    setOpenItems(nieuweOpenItems);
   }
 
   if (laden) return <p>Laden...</p>;
@@ -695,7 +750,6 @@ export default function ModulesBoom() {
     <div
       style={{
         display: "flex",
-        gap: "0",
         minHeight: "500px",
         border: "1px solid var(--grijs-200)",
         borderRadius: "10px",
@@ -713,7 +767,6 @@ export default function ModulesBoom() {
           padding: "12px 8px",
         }}
       >
-        {/* Nieuwe module knop */}
         <button
           className="knop knop-primair"
           style={{
@@ -747,6 +800,8 @@ export default function ModulesBoom() {
             niveau={0}
             actief={geselecteerd?.id === module.id}
             accentKleur="var(--groen)"
+            isOpen={!!openItems[module.id]}
+            onToggle={() => toggleOpen(module.id)}
             onClick={() =>
               selecteer({ ...module, type: "module", tabel: "modules" })
             }
@@ -762,12 +817,17 @@ export default function ModulesBoom() {
                       niveau={1}
                       actief={geselecteerd?.id === hoofdstuk.id}
                       accentKleur="var(--blauw)"
+                      isOpen={!!openItems[hoofdstuk.id]}
+                      onToggle={() => toggleOpen(hoofdstuk.id)}
                       onClick={() =>
-                        selecteer({
-                          ...hoofdstuk,
-                          type: "hoofdstuk",
-                          tabel: "hoofdstukken",
-                        })
+                        selecteer(
+                          {
+                            ...hoofdstuk,
+                            type: "hoofdstuk",
+                            tabel: "hoofdstukken",
+                          },
+                          [module.id],
+                        )
                       }
                       kinderen={
                         <>
@@ -781,12 +841,17 @@ export default function ModulesBoom() {
                                 niveau={2}
                                 actief={geselecteerd?.id === paragraaf.id}
                                 accentKleur="var(--grijs-500)"
+                                isOpen={!!openItems[paragraaf.id]}
+                                onToggle={() => toggleOpen(paragraaf.id)}
                                 onClick={() =>
-                                  selecteer({
-                                    ...paragraaf,
-                                    type: "paragraaf",
-                                    tabel: "paragrafen",
-                                  })
+                                  selecteer(
+                                    {
+                                      ...paragraaf,
+                                      type: "paragraaf",
+                                      tabel: "paragrafen",
+                                    },
+                                    [module.id, hoofdstuk.id],
+                                  )
                                 }
                                 kinderen={
                                   data.opgaves.filter(
@@ -808,12 +873,23 @@ export default function ModulesBoom() {
                                               geselecteerd?.id === opgave.id
                                             }
                                             accentKleur="var(--oranje)"
+                                            isOpen={!!openItems[opgave.id]}
+                                            onToggle={() =>
+                                              toggleOpen(opgave.id)
+                                            }
                                             onClick={() =>
-                                              selecteer({
-                                                ...opgave,
-                                                type: "opgave",
-                                                tabel: "opgaves",
-                                              })
+                                              selecteer(
+                                                {
+                                                  ...opgave,
+                                                  type: "opgave",
+                                                  tabel: "opgaves",
+                                                },
+                                                [
+                                                  module.id,
+                                                  hoofdstuk.id,
+                                                  paragraaf.id,
+                                                ],
+                                              )
                                             }
                                           />
                                         ))}
@@ -832,12 +908,13 @@ export default function ModulesBoom() {
                                 niveau={2}
                                 actief={geselecteerd?.id === quiz.id}
                                 accentKleur="var(--mod-arbeidsrecht)"
+                                isOpen={!!openItems[quiz.id]}
+                                onToggle={() => toggleOpen(quiz.id)}
                                 onClick={() =>
-                                  selecteer({
-                                    ...quiz,
-                                    type: "quiz",
-                                    tabel: "quizen",
-                                  })
+                                  selecteer(
+                                    { ...quiz, type: "quiz", tabel: "quizen" },
+                                    [module.id, hoofdstuk.id],
+                                  )
                                 }
                               />
                             ))}
@@ -864,7 +941,36 @@ export default function ModulesBoom() {
             geselecteerd={geselecteerd}
             onHerlaad={laadAlles}
             data={data}
-            onSelecteer={selecteer}
+            onSelecteer={(item) => {
+              // Zoek ouders op basis van type
+              const ouders = [];
+              if (item.type === "hoofdstuk") {
+                ouders.push(item.module_id);
+              } else if (item.type === "paragraaf" || item.type === "quiz") {
+                const hoofdstuk = data.hoofdstukken.find(
+                  (h) => h.id === item.hoofdstuk_id,
+                );
+                if (hoofdstuk) {
+                  ouders.push(hoofdstuk.module_id);
+                  ouders.push(hoofdstuk.id);
+                }
+              } else if (item.type === "opgave") {
+                const paragraaf = data.paragrafen.find(
+                  (p) => p.id === item.paragraaf_id,
+                );
+                if (paragraaf) {
+                  const hoofdstuk = data.hoofdstukken.find(
+                    (h) => h.id === paragraaf.hoofdstuk_id,
+                  );
+                  if (hoofdstuk) {
+                    ouders.push(hoofdstuk.module_id);
+                    ouders.push(hoofdstuk.id);
+                  }
+                  ouders.push(paragraaf.id);
+                }
+              }
+              selecteer(item, ouders);
+            }}
           />
         )}
       </div>
@@ -872,7 +978,6 @@ export default function ModulesBoom() {
   );
 }
 
-// ── Nieuw module formulier ──
 function NieuweModuleFormulier({ onHerlaad, onAnnuleren }) {
   const [naam, setNaam] = useState("");
   const [beschrijving, setBeschrijving] = useState("");
