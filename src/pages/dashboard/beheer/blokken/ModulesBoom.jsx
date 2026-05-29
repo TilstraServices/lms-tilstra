@@ -501,9 +501,6 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               />
             </>
           )}
-          {geselecteerd.type === "opgave" && (
-            <OpgaveBeheer opgave={geselecteerd} onHerlaad={onHerlaad} />
-          )}
           <div style={{ display: "flex", gap: "8px" }}>
             <button
               className="knop knop-primair"
@@ -521,6 +518,10 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
             </button>
           </div>
         </div>
+      )}
+
+      {geselecteerd.type === "opgave" && (
+        <OpgaveBeheer opgave={geselecteerd} onHerlaad={onHerlaad} />
       )}
 
       <hr
