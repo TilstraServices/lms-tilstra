@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../../lib/supabase";
 import QuizBeheer from "./QuizBeheer";
+import OpgaveBeheer from "./OpgaveBeheer";
 
 const IcoModule = () => (
   <svg
@@ -334,6 +335,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z" />
             </svg>
           </button>
+
           <button
             onClick={verwijder}
             style={{
@@ -498,6 +500,9 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                 }}
               />
             </>
+          )}
+          {geselecteerd.type === "opgave" && (
+            <OpgaveBeheer opgave={geselecteerd} onHerlaad={onHerlaad} />
           )}
           <div style={{ display: "flex", gap: "8px" }}>
             <button
@@ -939,6 +944,7 @@ export default function ModulesBoom() {
                                                   ...opgave,
                                                   type: "opgave",
                                                   tabel: "opgaves",
+                                                  sjabloon: opgave.type,
                                                 },
                                                 [
                                                   module.id,
