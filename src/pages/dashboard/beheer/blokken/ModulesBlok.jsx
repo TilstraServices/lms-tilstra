@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../../lib/supabase";
+import HoofdstukkenBlok from "./HoofdstukkenBlok";
 
 function DrieStippenMenu({ onBewerken, onVerwijderen }) {
   const [open, setOpen] = useState(false);
@@ -411,16 +412,14 @@ export default function ModulesBlok() {
                 </div>
               )}
 
-              {!bewerkModule && opengeklapt[module.id] && (
+              {opengeklapt[module.id] && !bewerkModule && (
                 <div
                   style={{
                     borderTop: "1px solid var(--grijs-200)",
                     padding: "16px 20px",
                   }}
                 >
-                  <p style={{ fontSize: "0.82rem", color: "var(--grijs-500)" }}>
-                    Hoofdstukken komen hier
-                  </p>
+                  <HoofdstukkenBlok moduleId={module.id} />
                 </div>
               )}
             </div>
