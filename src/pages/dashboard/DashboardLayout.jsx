@@ -12,7 +12,7 @@ export default function DashboardLayout({
   const [actief, setActief] = useState(navigatie[0]?.label);
 
   return (
-    <div className="layout">
+    <div className={`layout ${ingeklapt ? "ingeklapt" : ""}`}>
       {/* Sidebar */}
       <aside className={`sidebar ${ingeklapt ? "ingeklapt" : ""}`}>
         <div className="sidebar-inhoud">
