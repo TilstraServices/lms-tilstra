@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../../lib/supabase";
+import QuizBeheer from "./QuizBeheer";
 
 const IcoModule = () => (
   <svg
@@ -482,6 +483,19 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
           marginBottom: "16px",
         }}
       />
+
+      {geselecteerd.type === "quiz" && (
+        <>
+          <hr
+            style={{
+              border: "none",
+              borderTop: "1px solid var(--grijs-200)",
+              marginBottom: "16px",
+            }}
+          />
+          <QuizBeheer quiz={geselecteerd} onHerlaad={onHerlaad} />
+        </>
+      )}
 
       {kindInfo && (
         <>
