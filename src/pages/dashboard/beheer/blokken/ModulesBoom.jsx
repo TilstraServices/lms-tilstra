@@ -143,12 +143,16 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
     geselecteerd?.beschrijving || "",
   );
   const [iframeUrl, setIframeUrl] = useState(geselecteerd?.iframe_url || "");
+  const [opgaveType, setOpgaveType] = useState(geselecteerd?.type_opgave || "");
 
   async function slaOp() {
     if (!naam.trim()) return;
     const updates = { naam };
     if (geselecteerd.type === "module") updates.beschrijving = beschrijving;
-    if (geselecteerd.type === "opgave") updates.iframe_url = iframeUrl;
+    if (geselecteerd.type === "opgave") {
+      updates.iframe_url = iframeUrl;
+      updates.type = opgaveType;
+    }
     await supabase
       .from(geselecteerd.tabel)
       .update(updates)
@@ -438,12 +442,50 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                   marginBottom: "6px",
                 }}
               >
-                iframe URL
+                Type
+              </label>
+              <select
+                value={opgaveType}
+                onChange={(e) => {
+                  setOpgaveType(e.target.value);
+                }}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--grijs-200)",
+                  marginBottom: "12px",
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "0.85rem",
+                  background: "white",
+                }}
+              >
+                <option value="">Kies een type...</option>
+                <option value="meerkeuze">Meerkeuze</option>
+                <option value="invulvraag">Invulvraag</option>
+                <option value="drag-drop">Drag & Drop</option>
+                <option value="koppelvraag">Koppelvraag</option>
+              </select>
+              <label
+                style={{
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  color: "var(--grijs-700)",
+                  display: "block",
+                  marginBottom: "6px",
+                }}
+              >
+                iframe URL{" "}
+                <span style={{ fontWeight: 400, color: "var(--grijs-500)" }}>
+                  (optioneel — voor externe opgaves)
+                </span>
               </label>
               <input
                 type="text"
                 value={iframeUrl}
-                onChange={(e) => setIframeUrl(e.target.value)}
+                onChange={(e) => {
+                  setIframeUrl(e.target.value);
+                }}
                 placeholder="https://tilstraservices.github.io/..."
                 style={{
                   width: "100%",

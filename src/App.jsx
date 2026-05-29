@@ -6,6 +6,7 @@ import TraineeDashboard from "./pages/dashboard/trainee/Dashboard";
 import LeidinggevendeDashboard from "./pages/dashboard/leidinggevende/Dashboard";
 import BeheerDashboard from "./pages/dashboard/beheer/Dashboard";
 import "./index.css";
+import Paragraaf from "./pages/paragraaf/Paragraaf";
 
 function App() {
   const params = new URLSearchParams(window.location.search);
@@ -23,6 +24,7 @@ function App() {
           element={<LeidinggevendeDashboard />}
         />
         <Route path="/dashboard/beheer" element={<BeheerDashboard />} />
+        <Route path="/paragraaf" element={<Paragraaf />} />
       </Routes>
     </BrowserRouter>
   );

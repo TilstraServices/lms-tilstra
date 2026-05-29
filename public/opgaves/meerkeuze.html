@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meerkeuze opgave</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --lms-bg: #f0f2f5;
+        --lms-surface: #ffffff;
+        --lms-green: #2e7d32;
+        --lms-green-mid: #43a047;
+        --lms-green-light: #e8f5e9;
+        --lms-text: #1a1a1a;
+        --lms-text-muted: #5f6368;
+        --lms-border: #dadce0;
+        --lms-radius: 8px;
+        --lms-correct: #2e7d32;
+        --lms-correct-bg: #e8f5e9;
+        --lms-error: #c62828;
+        --lms-error-bg: #ffebee;
+      }
+      html,
+      body {
+        background: transparent;
+        font-family:
+          "Inter",
+          -apple-system,
+          sans-serif;
+        color: var(--lms-text);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+      .exercise {
+        background: var(--lms-surface);
+        border: 1px solid var(--lms-border);
+        border-radius: var(--lms-radius);
+        padding: 1.75rem 2rem;
+      }
+      .exercise-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--lms-text);
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--lms-border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .exercise-title::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: var(--lms-green);
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+      .options {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 1.5rem;
+      }
+      .option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 1.5px solid var(--lms-border);
+        border-radius: var(--lms-radius);
+        background: var(--lms-bg);
+        cursor: pointer;
+        transition:
+          border-color 0.12s,
+          background 0.12s;
+        user-select: none;
+      }
+      .option:hover {
+        border-color: var(--lms-green-mid);
+        background: var(--lms-green-light);
+      }
+      .option.selected {
+        border-color: var(--lms-green-mid);
+        background: var(--lms-green-light);
+        box-shadow: 0 0 0 3px rgba(67, 160, 71, 0.15);
+      }
+      .option.correct {
+        border-color: var(--lms-correct);
+        background: var(--lms-correct-bg);
+        cursor: default;
+      }
+      .option.incorrect {
+        border-color: var(--lms-error);
+        background: var(--lms-error-bg);
+        cursor: default;
+      }
+      .option.disabled {
+        cursor: default;
+        opacity: 0.6;
+      }
+      .option.toon-correct {
+        border-color: var(--lms-correct);
+        background: var(--lms-correct-bg);
+      }
+      .radio {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2px solid var(--lms-border);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+        transition:
+          border-color 0.12s,
+          background 0.12s;
+      }
+      .option.selected .radio {
+        border-color: var(--lms-green-mid);
+      }
+      .option.selected .radio::after {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--lms-green-mid);
+      }
+      .option.correct .radio {
+        border-color: var(--lms-correct);
+        background: var(--lms-correct);
+      }
+      .option.correct .radio::after {
+        content: "✓";
+        font-size: 11px;
+        color: #fff;
+        font-weight: 700;
+      }
+      .option.incorrect .radio {
+        border-color: var(--lms-error);
+        background: var(--lms-error);
+      }
+      .option.incorrect .radio::after {
+        content: "✕";
+        font-size: 10px;
+        color: #fff;
+        font-weight: 700;
+      }
+      .option.toon-correct .radio {
+        border-color: var(--lms-correct);
+        background: var(--lms-correct);
+      }
+      .option.toon-correct .radio::after {
+        content: "✓";
+        font-size: 11px;
+        color: #fff;
+        font-weight: 700;
+      }
+      .option-label {
+        font-size: 14px;
+        color: var(--lms-text);
+        line-height: 1.5;
+      }
+      .option.correct .option-label {
+        color: var(--lms-correct);
+        font-weight: 500;
+      }
+      .option.incorrect .option-label {
+        color: var(--lms-error);
+        font-weight: 500;
+      }
+      .option.toon-correct .option-label {
+        color: var(--lms-correct);
+        font-weight: 500;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+        padding: 8px 20px;
+        border-radius: 100px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.12s;
+      }
+      .btn-primary {
+        background: var(--lms-green);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #1b5e20;
+      }
+      .btn-secondary {
+        background: transparent;
+        color: var(--lms-text-muted);
+        border: 1px solid var(--lms-border);
+      }
+      .btn-secondary:hover {
+        background: #f1f3f4;
+        color: var(--lms-text);
+      }
+      .btn-hint {
+        background: #fff8e1;
+        color: #e65100;
+        border: 1px solid #ffd54f;
+        display: none;
+      }
+      .btn-hint:hover {
+        background: #fff3cd;
+      }
+      .feedback {
+        margin-top: 1rem;
+        padding: 10px 14px;
+        border-radius: var(--lms-radius);
+        font-size: 13.5px;
+        font-weight: 500;
+        display: none;
+        align-items: center;
+        gap: 8px;
+      }
+      .feedback.success {
+        display: flex;
+        background: var(--lms-correct-bg);
+        color: var(--lms-correct);
+        border: 1px solid #a5d6a7;
+      }
+      .feedback.wrong {
+        display: flex;
+        background: var(--lms-error-bg);
+        color: var(--lms-error);
+        border: 1px solid #ef9a9a;
+      }
+      .laden {
+        padding: 2rem;
+        text-align: center;
+        color: var(--lms-text-muted);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"><div class="laden">Opgave laden...</div></div>
+
+    <script>
+      const SUPABASE_URL = "https://jgycmakaugasithuszlc.supabase.co";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpneWNtYWthdWdhc2l0aHVzemxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Mjg1MjcsImV4cCI6MjA5NDQwNDUyN30.egxFASu1eRM1fH-zeAhM8ibXdP0Koc5JedpsX-d7j2A";
+      const { createClient } = supabase;
+      const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const params = new URLSearchParams(window.location.search);
+      const opgaveId = params.get("id");
+      const email = localStorage.getItem("email");
+
+      let geselecteerd = null;
+      let gecontroleerd = false;
+      let opgaveData = null;
+
+      async function laadOpgave() {
+        if (!opgaveId) {
+          document.getElementById("root").innerHTML =
+            '<div class="laden">Geen opgave ID opgegeven.</div>';
+          return;
+        }
+
+        const { data, error } = await db
+          .from("opgaves")
+          .select("*")
+          .eq("id", opgaveId)
+          .single();
+        if (error || !data) {
+          document.getElementById("root").innerHTML =
+            '<div class="laden">Opgave niet gevonden.</div>';
+          return;
+        }
+
+        opgaveData = data;
+        bouwOpgave(data.inhoud);
+      }
+
+      function bouwOpgave(inhoud) {
+        const root = document.getElementById("root");
+        root.innerHTML = `
+      <div class="exercise">
+        <div class="exercise-title">${inhoud.vraag}</div>
+        <div class="options" id="options"></div>
+        <div class="actions">
+          <button class="btn btn-secondary" id="btnReset">Opnieuw</button>
+          <button class="btn btn-hint" id="btnToonAntwoord">Toon Antwoord</button>
+        </div>
+        <div class="feedback" id="feedback">
+          <span id="feedbackIcon"></span>
+          <span id="feedbackText"></span>
+        </div>
+      </div>
+    `;
+
+        const optionsEl = document.getElementById("options");
+        inhoud.opties.forEach((optie, index) => {
+          const div = document.createElement("div");
+          div.className = "option";
+          div.dataset.index = index;
+          div.dataset.correct = optie.correct;
+          div.innerHTML = `<div class="radio"></div><span class="option-label">${optie.tekst}</span>`;
+          div.addEventListener("click", () => selecteerOptie(div));
+          optionsEl.appendChild(div);
+        });
+
+        document.getElementById("btnReset").addEventListener("click", reset);
+        document
+          .getElementById("btnToonAntwoord")
+          .addEventListener("click", toonAntwoord);
+      }
+
+      function selecteerOptie(optie) {
+        if (gecontroleerd) return;
+        if (geselecteerd) geselecteerd.classList.remove("selected");
+        geselecteerd = optie;
+        optie.classList.add("selected");
+      }
+
+      function controleer() {
+        if (!geselecteerd || gecontroleerd) return 0;
+        gecontroleerd = true;
+
+        const isCorrect = geselecteerd.dataset.correct === "true";
+        const score = isCorrect ? 100 : 0;
+
+        document.querySelectorAll(".option").forEach((opt) => {
+          if (opt === geselecteerd) {
+            opt.classList.remove("selected");
+            opt.classList.add(isCorrect ? "correct" : "incorrect");
+          } else {
+            opt.classList.add("disabled");
+          }
+        });
+
+        const feedback = document.getElementById("feedback");
+        feedback.className = "feedback";
+        if (isCorrect) {
+          feedback.classList.add("success");
+          document.getElementById("feedbackIcon").textContent = "✓";
+          document.getElementById("feedbackText").textContent = "Correct!";
+        } else {
+          feedback.classList.add("wrong");
+          document.getElementById("feedbackIcon").textContent = "✕";
+          document.getElementById("feedbackText").textContent =
+            "Niet correct. Probeer opnieuw of toon het antwoord.";
+          document.getElementById("btnToonAntwoord").style.display =
+            "inline-block";
+        }
+
+        // Score terugsturen naar container
+        window.parent.postMessage(
+          {
+            type: "opgave_score",
+            opgave_id: opgaveId,
+            score: score,
+          },
+          "*",
+        );
+
+        return score;
+      }
+
+      function toonAntwoord() {
+        document.querySelectorAll(".option").forEach((opt) => {
+          if (opt.dataset.correct === "true") {
+            opt.classList.add("toon-correct");
+            opt.classList.remove("disabled");
+          }
+        });
+        document.getElementById("btnToonAntwoord").style.display = "none";
+      }
+
+      function reset() {
+        gecontroleerd = false;
+        geselecteerd = null;
+        document.querySelectorAll(".option").forEach((opt) => {
+          opt.classList.remove(
+            "selected",
+            "correct",
+            "incorrect",
+            "disabled",
+            "toon-correct",
+          );
+        });
+        document.getElementById("feedback").className = "feedback";
+        document.getElementById("btnToonAntwoord").style.display = "none";
+
+        // Stuur reset signaal naar container
+        window.parent.postMessage(
+          { type: "opgave_reset", opgave_id: opgaveId },
+          "*",
+        );
+      }
+
+      // Luisteren naar berichten van de container
+      window.addEventListener("message", (event) => {
+        if (event.data.type === "controleer") controleer();
+        if (event.data.type === "reset") reset();
+      });
+
+      laadOpgave();
+
+      // Stuur hoogte naar container
+      function stuurHoogte() {
+        const hoogte = document.body.scrollHeight;
+        window.parent.postMessage(
+          { type: "iframe_hoogte", hoogte: hoogte },
+          "*",
+        );
+      }
+
+      // Stuur hoogte zodra pagina geladen is en na elke wijziging
+      window.addEventListener("load", stuurHoogte);
+      new ResizeObserver(stuurHoogte).observe(document.body);
+    </script>
+  </body>
+</html>
