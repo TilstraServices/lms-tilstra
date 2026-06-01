@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../../lib/supabase";
 import QuizBeheer from "./QuizBeheer";
 import OpgaveBeheer from "./OpgaveBeheer";
@@ -75,7 +75,6 @@ function BoomItem({
     <div>
       <div
         onClick={() => {
-          onToggle && onToggle();
           onClick && onClick();
         }}
         style={{
@@ -102,10 +101,15 @@ function BoomItem({
       >
         {kinderen ? (
           <span
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle && onToggle();
+            }}
             style={{
               fontSize: "0.6rem",
               color: "var(--grijs-400)",
               width: "10px",
+              cursor: "pointer",
             }}
           >
             {isOpen ? "▼" : "▶"}
@@ -137,6 +141,177 @@ function BoomItem({
   );
 }
 
+function SleepLijst({
+  kinderen,
+  geselecteerd,
+  onSelecteer,
+  onHerlaad,
+  data,
+  kindInfo,
+}) {
+  async function verschuif(index, richting) {
+    const nieuweVolgorde = [...kinderen];
+    const doelIndex = index + richting;
+    if (doelIndex < 0 || doelIndex >= nieuweVolgorde.length) return;
+    [nieuweVolgorde[index], nieuweVolgorde[doelIndex]] = [
+      nieuweVolgorde[doelIndex],
+      nieuweVolgorde[index],
+    ];
+    for (let i = 0; i < nieuweVolgorde.length; i++) {
+      await supabase
+        .from(kindInfo.tabel)
+        .update({ volgorde: i })
+        .eq("id", nieuweVolgorde[i].id);
+    }
+    onHerlaad();
+  }
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "4px",
+        marginBottom: "12px",
+      }}
+    >
+      {kinderen.map((kind, index) => {
+        const isQuiz = data.quizen.find((q) => q.id === kind.id);
+        const icoon = isQuiz ? (
+          <IcoQuiz />
+        ) : kindInfo.type === "hoofdstuk" ? (
+          <IcoHoofdstuk />
+        ) : kindInfo.type === "paragraaf" ? (
+          <IcoParagraaf />
+        ) : (
+          <IcoOpgave />
+        );
+        const type = isQuiz ? "quiz" : kindInfo.type;
+        const tabel = isQuiz ? "quizen" : kindInfo.tabel;
+
+        return (
+          <div
+            key={kind.id}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              border: "1px solid var(--grijs-200)",
+              background: "var(--grijs-50)",
+              gap: "6px",
+            }}
+          >
+            {/* Pijltjes — alleen bij paragraaf want dan zijn het opgaves */}
+            {geselecteerd.type === "paragraaf" && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                  flexShrink: 0,
+                }}
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    verschuif(index, -1);
+                  }}
+                  disabled={index === 0}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: index === 0 ? "default" : "pointer",
+                    padding: "1px 3px",
+                    borderRadius: "3px",
+                    color:
+                      index === 0 ? "var(--grijs-300)" : "var(--grijs-500)",
+                    fontSize: "0.6rem",
+                    lineHeight: 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (index !== 0)
+                      e.currentTarget.style.background = "var(--grijs-200)";
+                  }}
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "none")
+                  }
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    verschuif(index, 1);
+                  }}
+                  disabled={index === kinderen.length - 1}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor:
+                      index === kinderen.length - 1 ? "default" : "pointer",
+                    padding: "1px 3px",
+                    borderRadius: "3px",
+                    color:
+                      index === kinderen.length - 1
+                        ? "var(--grijs-300)"
+                        : "var(--grijs-500)",
+                    fontSize: "0.6rem",
+                    lineHeight: 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (index !== kinderen.length - 1)
+                      e.currentTarget.style.background = "var(--grijs-200)";
+                  }}
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "none")
+                  }
+                >
+                  ▼
+                </button>
+              </div>
+            )}
+
+            {/* Klikbaar gedeelte */}
+            <div
+              onClick={() =>
+                onSelecteer({ ...kind, type, tabel, sjabloon: kind.type })
+              }
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                flex: 1,
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.color = "var(--groen)")
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.color = "inherit")}
+            >
+              <span style={{ color: "var(--grijs-500)", display: "flex" }}>
+                {icoon}
+              </span>
+              <span style={{ fontSize: "0.85rem" }}>{kind.naam}</span>
+            </div>
+
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              viewBox="0 0 256 256"
+              style={{ color: "var(--grijs-400)", flexShrink: 0 }}
+            >
+              <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z" />
+            </svg>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
   const [bewerkModus, setBewerkModus] = useState(false);
   const [naam, setNaam] = useState(geselecteerd?.naam || "");
@@ -144,7 +319,9 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
     geselecteerd?.beschrijving || "",
   );
   const [iframeUrl, setIframeUrl] = useState(geselecteerd?.iframe_url || "");
-  const [opgaveType, setOpgaveType] = useState(geselecteerd?.type_opgave || "");
+  const [opgaveType, setOpgaveType] = useState(
+    geselecteerd?.sjabloon || geselecteerd?.type || "",
+  );
 
   async function slaOp() {
     if (!naam.trim()) return;
@@ -159,7 +336,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
       .update(updates)
       .eq("id", geselecteerd.id);
     setBewerkModus(false);
-    onHerlaad();
+    onHerlaad(geselecteerd.tabel, { ...geselecteerd, ...updates });
   }
 
   async function verwijder() {
@@ -170,7 +347,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
     )
       return;
     await supabase.from(geselecteerd.tabel).delete().eq("id", geselecteerd.id);
-    onHerlaad();
+    onHerlaad(geselecteerd.tabel);
   }
 
   if (!geselecteerd) {
@@ -298,10 +475,27 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               fontSize: "1.1rem",
               fontWeight: 700,
               color: "var(--grijs-900)",
+              marginBottom: geselecteerd.type === "opgave" ? "8px" : "0",
             }}
           >
             {geselecteerd.naam}
           </p>
+          {geselecteerd.type === "opgave" && geselecteerd.sjabloon && (
+            <span
+              style={{
+                display: "inline-block",
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                padding: "3px 10px",
+                borderRadius: "100px",
+                background: "var(--groen-licht)",
+                color: "var(--groen-donker)",
+                textTransform: "capitalize",
+              }}
+            >
+              {geselecteerd.sjabloon.replace("-", " ")}
+            </span>
+          )}
         </div>
         <div style={{ display: "flex", gap: "4px", marginLeft: "auto" }}>
           <button
@@ -466,6 +660,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                 <option value="meerkeuze">Meerkeuze</option>
                 <option value="invulvraag">Invulvraag</option>
                 <option value="drag-drop">Drag & Drop</option>
+                <option value="open-vraag">Open vraag</option>
                 <option value="koppelvraag">Koppelvraag</option>
               </select>
               <label
@@ -521,7 +716,10 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
       )}
 
       {geselecteerd.type === "opgave" && (
-        <OpgaveBeheer opgave={geselecteerd} onHerlaad={onHerlaad} />
+        <OpgaveBeheer
+          opgave={geselecteerd}
+          onHerlaad={() => onHerlaad("opgaves")}
+        />
       )}
 
       <hr
@@ -533,16 +731,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
       />
 
       {geselecteerd.type === "quiz" && (
-        <>
-          <hr
-            style={{
-              border: "none",
-              borderTop: "1px solid var(--grijs-200)",
-              marginBottom: "16px",
-            }}
-          />
-          <QuizBeheer quiz={geselecteerd} onHerlaad={onHerlaad} />
-        </>
+        <QuizBeheer quiz={geselecteerd} onHerlaad={() => onHerlaad("quizen")} />
       )}
 
       {kindInfo && (
@@ -572,80 +761,25 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               Nog geen items.
             </p>
           ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "4px",
-                marginBottom: "12px",
-              }}
-            >
-              {kinderen.map((kind) => {
-                const isQuiz = data.quizen.find((q) => q.id === kind.id);
-                const icoon = isQuiz ? (
-                  <IcoQuiz />
-                ) : kindInfo.type === "hoofdstuk" ? (
-                  <IcoHoofdstuk />
-                ) : kindInfo.type === "paragraaf" ? (
-                  <IcoParagraaf />
-                ) : (
-                  <IcoOpgave />
-                );
-                const type = isQuiz ? "quiz" : kindInfo.type;
-                const tabel = isQuiz ? "quizen" : kindInfo.tabel;
-                return (
-                  <div
-                    key={kind.id}
-                    onClick={() => onSelecteer({ ...kind, type, tabel })}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid var(--grijs-200)",
-                      cursor: "pointer",
-                      background: "var(--grijs-50)",
-                      transition: "background 0.1s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "var(--groen-licht)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "var(--grijs-50)")
-                    }
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <span
-                        style={{ color: "var(--grijs-500)", display: "flex" }}
-                      >
-                        {icoon}
-                      </span>
-                      <span style={{ fontSize: "0.85rem" }}>{kind.naam}</span>
-                    </div>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      fill="currentColor"
-                      viewBox="0 0 256 256"
-                      style={{ color: "var(--grijs-400)", marginLeft: "auto" }}
-                    >
-                      <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z" />
-                    </svg>
-                  </div>
-                );
-              })}
-            </div>
+            <SleepLijst
+              kinderen={kinderen}
+              geselecteerd={geselecteerd}
+              onSelecteer={onSelecteer}
+              onHerlaad={() => onHerlaad(kindInfo.tabel)}
+              data={data}
+              kindInfo={kindInfo}
+            />
           )}
           <NieuwItemFormulier
             geselecteerd={geselecteerd}
-            onHerlaad={onHerlaad}
+            onHerlaad={() => {
+              const tabelMap = {
+                module: "hoofdstukken",
+                hoofdstuk: "paragrafen",
+                paragraaf: "opgaves",
+              };
+              onHerlaad(tabelMap[geselecteerd.type] || geselecteerd.tabel);
+            }}
           />
         </>
       )}
@@ -655,6 +789,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
 
 function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
   const [naam, setNaam] = useState("");
+  const [type, setType] = useState("");
   const [toonFormulier, setToonFormulier] = useState(false);
 
   const kindTypes = {
@@ -665,18 +800,52 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
   const kind = kindTypes[geselecteerd.type];
   if (!kind) return null;
 
-  async function voegToe(type) {
+  const leegeInhoud = {
+    meerkeuze: {
+      vraag: "",
+      opties: [
+        { tekst: "", correct: true },
+        { tekst: "", correct: false },
+        { tekst: "", correct: false },
+        { tekst: "", correct: false },
+      ],
+    },
+    invulvraag: { vraag: "", tekst: "", antwoorden: [""] },
+    "drag-drop": { vraag: "", tekst: "", antwoorden: [""], woordenbank: [""] },
+    "open-vraag": { vraag: "", modelantwoorden: [""] },
+  };
+
+  async function voegToe(opgaveType) {
     if (!naam.trim()) return;
+    if (geselecteerd.type === "paragraaf" && !type) return;
+
     let tabel = kind.tabel;
     let veld = kind.veld;
     if (geselecteerd.type === "hoofdstuk") {
-      tabel = type === "quiz" ? "quizen" : "paragrafen";
+      tabel = opgaveType === "quiz" ? "quizen" : "paragrafen";
       veld = "hoofdstuk_id";
     }
-    await supabase
+
+    const { data: bestaande } = await supabase
       .from(tabel)
-      .insert({ naam, [veld]: geselecteerd.id, volgorde: 0 });
+      .select("volgorde")
+      .eq(veld, geselecteerd.id)
+      .order("volgorde", { ascending: false })
+      .limit(1);
+
+    const volgorde =
+      bestaande && bestaande.length > 0 ? bestaande[0].volgorde + 1 : 0;
+    const nieuwItem = { naam, [veld]: geselecteerd.id, volgorde };
+
+    // Voeg type en lege inhoud toe voor opgaves
+    if (geselecteerd.type === "paragraaf") {
+      nieuwItem.type = type;
+      nieuwItem.inhoud = leegeInhoud[type] || {};
+    }
+
+    await supabase.from(tabel).insert(nieuwItem);
     setNaam("");
+    setType("");
     setToonFormulier(false);
     onHerlaad();
   }
@@ -692,28 +861,67 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
           + Nieuw {kind.label}
         </button>
       ) : (
-        <div className="uitklap-animatie">
+        <div
+          className="uitklap-animatie"
+          style={{
+            background: "var(--groen-licht)",
+            border: "1px solid var(--groen)",
+            borderRadius: "10px",
+            padding: "14px",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "var(--groen-donker)",
+              marginBottom: "10px",
+            }}
+          >
+            Nieuwe opgave
+          </p>
           <input
             type="text"
-            placeholder={`Naam van de ${kind.label}`}
+            placeholder="Naam van de opgave"
             value={naam}
             onChange={(e) => setNaam(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter")
-                voegToe(
-                  geselecteerd.type === "hoofdstuk" ? "paragraaf" : kind.label,
-                );
-            }}
             style={{
               width: "100%",
               padding: "9px 12px",
               borderRadius: "8px",
-              border: "1px solid var(--grijs-200)",
-              marginBottom: "10px",
+              border: "1px solid var(--groen)",
+              marginBottom: "8px",
               fontFamily: "Inter, sans-serif",
               fontSize: "0.85rem",
+              background: "white",
             }}
           />
+
+          {geselecteerd.type === "paragraaf" && (
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "9px 12px",
+                borderRadius: "8px",
+                border: "1px solid var(--groen)",
+                marginBottom: "10px",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "0.85rem",
+                background: "white",
+              }}
+            >
+              <option value="">Kies een type...</option>
+              <option value="meerkeuze">Meerkeuze</option>
+              <option value="invulvraag">Invulvraag</option>
+              <option value="drag-drop">Drag & Drop</option>
+              <option value="open-vraag">Open vraag</option>
+            </select>
+          )}
+
           <div style={{ display: "flex", gap: "8px" }}>
             {geselecteerd.type === "hoofdstuk" ? (
               <>
@@ -737,6 +945,7 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
                 className="knop knop-primair"
                 style={{ fontSize: "0.82rem" }}
                 onClick={() => voegToe()}
+                disabled={geselecteerd.type === "paragraaf" && !type}
               >
                 Opslaan
               </button>
@@ -744,7 +953,11 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
             <button
               className="knop knop-ghost"
               style={{ fontSize: "0.82rem" }}
-              onClick={() => setToonFormulier(false)}
+              onClick={() => {
+                setToonFormulier(false);
+                setType("");
+                setNaam("");
+              }}
             >
               Annuleren
             </button>
@@ -767,27 +980,36 @@ export default function ModulesBoom() {
   const [laden, setLaden] = useState(true);
   const [openItems, setOpenItems] = useState({});
 
+  const geladen = useRef(false);
+
   useEffect(() => {
-    laadAlles();
+    if (geladen.current) return;
+    geladen.current = true;
+
+    Promise.all([
+      supabase.from("modules").select("*").order("volgorde"),
+      supabase.from("hoofdstukken").select("*").order("volgorde"),
+      supabase.from("paragrafen").select("*").order("volgorde"),
+      supabase.from("quizen").select("*").order("volgorde"),
+      supabase.from("opgaves").select("*").order("volgorde"),
+    ]).then(([modules, hoofdstukken, paragrafen, quizen, opgaves]) => {
+      setData({
+        modules: modules.data || [],
+        hoofdstukken: hoofdstukken.data || [],
+        paragrafen: paragrafen.data || [],
+        quizen: quizen.data || [],
+        opgaves: opgaves.data || [],
+      });
+      setLaden(false);
+    });
   }, []);
 
-  async function laadAlles() {
-    const [modules, hoofdstukken, paragrafen, quizen, opgaves] =
-      await Promise.all([
-        supabase.from("modules").select("*").order("volgorde"),
-        supabase.from("hoofdstukken").select("*").order("volgorde"),
-        supabase.from("paragrafen").select("*").order("volgorde"),
-        supabase.from("quizen").select("*").order("volgorde"),
-        supabase.from("opgaves").select("*").order("volgorde"),
-      ]);
-    setData({
-      modules: modules.data || [],
-      hoofdstukken: hoofdstukken.data || [],
-      paragrafen: paragrafen.data || [],
-      quizen: quizen.data || [],
-      opgaves: opgaves.data || [],
-    });
-    setLaden(false);
+  async function herlaadTabel(tabel) {
+    const { data: nieuw } = await supabase
+      .from(tabel)
+      .select("*")
+      .order("volgorde");
+    setData((prev) => ({ ...prev, [tabel]: nieuw || [] }));
   }
 
   function toggleOpen(id) {
@@ -995,14 +1217,17 @@ export default function ModulesBoom() {
       <div style={{ flex: 1, overflowY: "auto" }}>
         {geselecteerd?.type === "nieuw_module" ? (
           <NieuweModuleFormulier
-            onHerlaad={laadAlles}
+            onHerlaad={() => herlaadTabel("modules")}
             onAnnuleren={() => setGeselecteerd(null)}
           />
         ) : (
           <Paneel
             key={geselecteerd?.id}
             geselecteerd={geselecteerd}
-            onHerlaad={laadAlles}
+            onHerlaad={(tabel, bijgewerktItem) => {
+              herlaadTabel(tabel);
+              if (bijgewerktItem) setGeselecteerd(bijgewerktItem);
+            }}
             data={data}
             onSelecteer={(item) => {
               // Zoek ouders op basis van type

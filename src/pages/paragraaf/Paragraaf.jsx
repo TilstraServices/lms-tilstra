@@ -1,5 +1,59 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
+
+function LazyIframe({ opgave }) {
+  const ref = useRef(null);
+  const [zichtbaar, setZichtbaar] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setZichtbaar(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} style={{ minHeight: "100px" }}>
+      {zichtbaar ? (
+        <iframe
+          className="opgave-iframe"
+          src={`/lms-tilstra/opgaves/${opgave.type}.html?id=${opgave.id}`}
+          style={{ width: "100%", border: "none", display: "block" }}
+          scrolling="no"
+          onLoad={(e) => {
+            try {
+              const height = e.target.contentDocument.body.scrollHeight;
+              e.target.style.height = height + 32 + "px";
+            } catch {
+              e.target.style.height = "300px";
+            }
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            height: "100px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#9E9E9E",
+            fontSize: "0.82rem",
+            fontFamily: "Inter, sans-serif",
+          }}
+        >
+          Laden...
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Paragraaf() {
   const [opgaves, setOpgaves] = useState([]);
@@ -72,7 +126,6 @@ export default function Paragraaf() {
   }, []);
 
   function controleerAlles() {
-    // Stuur controleer signaal naar alle iframes
     const iframes = document.querySelectorAll(".opgave-iframe");
     iframes.forEach((iframe) => {
       iframe.contentWindow.postMessage({ type: "controleer" }, "*");
@@ -296,25 +349,11 @@ export default function Paragraaf() {
                 </span>
               )}
             </div>
-            <iframe
-              className="opgave-iframe"
-              src={`/lms-tilstra/opgaves/${opgave.type}.html?id=${opgave.id}`}
-              style={{ width: "100%", border: "none", display: "block" }}
-              scrolling="no"
-              onLoad={(e) => {
-                // Auto resize iframe hoogte
-                try {
-                  const height = e.target.contentDocument.body.scrollHeight;
-                  e.target.style.height = height + 32 + "px";
-                } catch {
-                  e.target.style.height = "300px";
-                }
-              }}
-            />
+            <LazyIframe opgave={opgave} />
           </div>
         ))}
 
-        {/* Controleer knop */}
+        {/* Knoppen onderaan */}
         {opgaves.length > 0 && (
           <div
             style={{
@@ -338,7 +377,7 @@ export default function Paragraaf() {
                 fontFamily: "Inter, sans-serif",
               }}
             >
-              Opnieuw
+              Reset
             </button>
             <button
               onClick={controleerAlles}
