@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./dashboard.css";
 
 export default function DashboardLayout({
@@ -11,8 +11,34 @@ export default function DashboardLayout({
   const [ingeklapt, setIngeklapt] = useState(false);
   const [actief, setActief] = useState(navigatie[0]?.label);
 
+  useEffect(() => {
+    if (rol === "Beheerder") {
+      document.body.classList.add("beheer-body");
+    }
+    return () => {
+      document.body.classList.remove("beheer-body");
+    };
+  }, [rol]);
+
   return (
-    <div className={`layout ${ingeklapt ? "ingeklapt" : ""}`}>
+    <div
+      className={`layout ${ingeklapt ? "ingeklapt" : ""}`}
+      style={
+        rol === "Beheerder"
+          ? {
+              "--grijs-50": "#F0F2F0",
+              "--grijs-100": "#E8EBE8",
+              "--grijs-200": "#D4DAD4",
+              "--grijs-300": "#BDC6BD",
+              "--grijs-500": "#7A8F7A",
+              "--grijs-700": "#4A5E4A",
+              "--grijs-900": "#1A2B1A",
+              "--schaduw": "0 2px 12px rgba(0,0,0,0.1)",
+              background: "#E8EBE8",
+            }
+          : {}
+      }
+    >
       {/* Sidebar */}
       <aside className={`sidebar ${ingeklapt ? "ingeklapt" : ""}`}>
         <div className="sidebar-inhoud">
@@ -111,7 +137,10 @@ export default function DashboardLayout({
       </aside>
 
       {/* Hoofdinhoud */}
-      <main className="hoofd">
+      <main
+        className="hoofd"
+        style={rol === "Beheerder" ? { background: "#E8EBE8" } : {}}
+      >
         <div className="topbar">
           <div>
             <p className="topbar-titel">{actief}</p>

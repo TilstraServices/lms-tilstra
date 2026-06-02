@@ -529,3 +529,20 @@ body {
   font-size: 0.82rem;
   color: var(--grijs-500);
 }
+
+/* ── Beheerder dashboard stijl ── */
+.beheer-thema,
+.beheer-thema * {
+  --grijs-50: #f0f2f0;
+  --grijs-100: #e8ebe8;
+  --grijs-200: #d4dad4;
+  --grijs-300: #bdc6bd;
+  --grijs-500: #7a8f7a;
+  --grijs-700: #4a5e4a;
+  --grijs-900: #1a2b1a;
+  --schaduw: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+body.beheer-body {
+  background: #e8ebe8;
+}

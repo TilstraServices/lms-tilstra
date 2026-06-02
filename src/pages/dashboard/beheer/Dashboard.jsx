@@ -1,8 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { haalGebruikerOp } from "../../../lib/auth";
 import DashboardLayout from "../DashboardLayout";
 import ModulesBoom from "./blokken/ModulesBoom";
+
+function BeheerDashboardBlok({ email }) {
+  const navigate = useNavigate();
+  const [rol, setRol] = useState(null);
+
+  useEffect(() => {
+    async function laadRol() {
+      const { haalRolOp } = await import("../../../lib/auth");
+      const gevondenRol = await haalRolOp(email);
+      setRol(gevondenRol);
+    }
+    if (email) laadRol();
+  }, [email]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {rol === "leidinggevende" && (
+        <div
+          style={{
+            background: "var(--groen-licht)",
+            border: "1px solid var(--groen)",
+            borderRadius: "10px",
+            padding: "16px 20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <p
+            style={{
+              fontSize: "0.85rem",
+              color: "var(--groen-donker)",
+              fontWeight: 500,
+            }}
+          >
+            Je bekijkt het beheerdashboard als leidinggevende.
+          </p>
+          <button
+            onClick={() => navigate("/dashboard/leidinggevende")}
+            className="knop knop-primair"
+            style={{ fontSize: "0.82rem", flexShrink: 0 }}
+          >
+            ← Terug naar mijn dashboard
+          </button>
+        </div>
+      )}
+      <p style={{ color: "var(--grijs-500)", fontSize: "0.85rem" }}>
+        Dashboard blok komt hier
+      </p>
+    </div>
+  );
+}
 
 export default function BeheerDashboard() {
   const [email, setEmail] = useState(() => localStorage.getItem("email"));
@@ -48,7 +100,7 @@ export default function BeheerDashboard() {
           <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H53.39a8,8,0,0,0,7.23-4.57,48,48,0,0,1,86.76,0,8,8,0,0,0,7.23,4.57H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM80,144a24,24,0,1,1,24,24A24,24,0,0,1,80,144Zm136,56H159.43a64.39,64.39,0,0,0-28.83-26.16,40,40,0,1,0-53.2,0A64.39,64.39,0,0,0,48.57,200H40V56H216ZM56,96V80a8,8,0,0,1,8-8H192a8,8,0,0,1,8,8v96a8,8,0,0,1-8,8H176a8,8,0,0,1,0-16h8V88H72v8a8,8,0,0,1-16,0Z" />
         </svg>
       ),
-      blok: <p>Dashboard blok komt hier</p>,
+      blok: <BeheerDashboardBlok email={email} />,
       sectie: "Beheer",
     },
     {
