@@ -7,6 +7,7 @@ import LeidinggevendeDashboard from "./pages/dashboard/leidinggevende/Dashboard"
 import BeheerDashboard from "./pages/dashboard/beheer/Dashboard";
 import "./index.css";
 import Paragraaf from "./pages/paragraaf/Paragraaf";
+import QuizContainer from "./pages/paragraaf/Quiz_container";
 
 function App() {
   const params = new URLSearchParams(window.location.search);
@@ -25,6 +26,7 @@ function App() {
         />
         <Route path="/dashboard/beheer" element={<BeheerDashboard />} />
         <Route path="/paragraaf" element={<Paragraaf />} />
+        <Route path="/quiz" element={<QuizContainer />} />
       </Routes>
     </BrowserRouter>
   );
