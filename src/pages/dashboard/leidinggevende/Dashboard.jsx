@@ -129,7 +129,7 @@ export default function LeidinggevendeDashboard() {
 
   const navigatie = [
     {
-      label: "Dashboard",
+      label: "Home",
       icoon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
