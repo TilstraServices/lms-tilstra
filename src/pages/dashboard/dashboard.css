@@ -1,5 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
+@keyframes zweven {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.zwevend {
+  animation: zweven 2s ease-in-out infinite;
+}
+
 @keyframes uitrollen {
   from {
     opacity: 0;
