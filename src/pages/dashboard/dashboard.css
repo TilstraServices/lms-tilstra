@@ -44,6 +44,23 @@
   animation: uitklappen 0.8s ease;
 }
 
+.uitklap-container {
+  overflow: hidden;
+  max-height: 2000px;
+  transition:
+    max-height 1s ease,
+    opacity 0.9s ease;
+  opacity: 1;
+}
+
+.uitklap-container.ingeklapt {
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 0.2s ease,
+    opacity 0.15s ease;
+}
+
 :root {
   --groen: #2e7d32;
   --groen-licht: #e8f5e9;
@@ -305,10 +322,13 @@ body {
 /* ── Hoofdinhoud ── */
 .hoofd {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 28px 32px 60px;
   margin-left: 220px;
   transition: margin-left 0.25s ease;
+  scrollbar-gutter: stable;
+  min-width: 0;
+  width: calc(100vw - 220px);
 }
 
 /* ── Topbar ── */
@@ -559,4 +579,8 @@ body {
 
 body.beheer-body {
   background: #e8ebe8;
+}
+
+html {
+  scrollbar-gutter: stable;
 }
