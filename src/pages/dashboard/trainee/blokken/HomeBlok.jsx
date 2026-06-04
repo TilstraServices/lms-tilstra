@@ -99,7 +99,7 @@ export default function HomeBlok({ email, naam }) {
       .from("module_voortgang")
       .select("*, modules(naam, categorie)")
       .eq("trainee_email", email)
-      .order("afgerond_op", { ascending: false })
+      .order("voortgang", { ascending: false })
       .limit(1);
 
     if (!voortgangData || voortgangData.length === 0) {
@@ -123,28 +123,36 @@ export default function HomeBlok({ email, naam }) {
 
       // Gem. score voor deze module
       const moduleId = voortgangData[0].module_id;
-      const { data: paragrafen } = await supabase
-        .from("paragrafen")
+      const { data: hoofdstukken } = await supabase
+        .from("hoofdstukken")
         .select("id")
-        .eq("hoofdstuk_id", moduleId);
-      if (paragrafen && paragrafen.length > 0) {
-        const paragraafIds = paragrafen.map((p) => p.id);
-        const { data: opgaves } = await supabase
-          .from("opgaves")
+        .eq("module_id", moduleId);
+
+      if (hoofdstukken && hoofdstukken.length > 0) {
+        const hoofdstukIds = hoofdstukken.map((h) => h.id);
+        const { data: paragrafen } = await supabase
+          .from("paragrafen")
           .select("id")
-          .in("paragraaf_id", paragraafIds);
-        if (opgaves && opgaves.length > 0) {
-          const opgaveIds = opgaves.map((o) => o.id);
-          const { data: scores } = await supabase
-            .from("scores")
-            .select("score")
-            .eq("trainee_email", email)
-            .in("opgave_id", opgaveIds);
-          if (scores && scores.length > 0) {
-            const gem = Math.round(
-              scores.reduce((a, b) => a + b.score, 0) / scores.length,
-            );
-            setModuleScore(gem);
+          .in("hoofdstuk_id", hoofdstukIds);
+        if (paragrafen && paragrafen.length > 0) {
+          const paragraafIds = paragrafen.map((p) => p.id);
+          const { data: opgaves } = await supabase
+            .from("opgaves")
+            .select("id")
+            .in("paragraaf_id", paragraafIds);
+          if (opgaves && opgaves.length > 0) {
+            const opgaveIds = opgaves.map((o) => o.id);
+            const { data: scores } = await supabase
+              .from("scores")
+              .select("score")
+              .eq("trainee_email", email)
+              .in("opgave_id", opgaveIds);
+            if (scores && scores.length > 0) {
+              const gem = Math.round(
+                scores.reduce((a, b) => a + b.score, 0) / scores.length,
+              );
+              setModuleScore(gem);
+            }
           }
         }
       }

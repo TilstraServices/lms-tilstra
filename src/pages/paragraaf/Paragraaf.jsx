@@ -59,6 +59,7 @@ export default function Paragraaf() {
   const [opgaves, setOpgaves] = useState([]);
   const [laden, setLaden] = useState(true);
   const [paragraafNaam, setParagraafNaam] = useState("");
+  const [moduleId, setModuleId] = useState(null);
   const [scores, setScores] = useState({});
   const [gecontroleerd, setGecontroleerd] = useState(false);
   const [opgeslagen, setOpgeslagen] = useState(false);
@@ -76,11 +77,19 @@ export default function Paragraaf() {
 
       const { data: paragraaf } = await supabase
         .from("paragrafen")
-        .select("naam")
+        .select("naam, hoofdstuk_id")
         .eq("id", paragraafId)
         .single();
 
-      if (paragraaf) setParagraafNaam(paragraaf.naam);
+      if (paragraaf) {
+        setParagraafNaam(paragraaf.naam);
+        const { data: hoofdstuk } = await supabase
+          .from("hoofdstukken")
+          .select("module_id")
+          .eq("id", paragraaf.hoofdstuk_id)
+          .single();
+        if (hoofdstuk) setModuleId(hoofdstuk.module_id);
+      }
 
       const { data: opgavesData } = await supabase
         .from("opgaves")
@@ -94,7 +103,6 @@ export default function Paragraaf() {
     laadData();
   }, [paragraafId]);
 
-  // Luisteren naar postMessage van opgave iframes
   useEffect(() => {
     function handleMessage(event) {
       if (event.data.type === "opgave_score") {
@@ -143,7 +151,93 @@ export default function Paragraaf() {
     setScores({});
   }
 
-  // Sla scores automatisch op zodra alle opgaves gecontroleerd zijn
+  async function berekeningVoortgang() {
+    const { data: hoofdstukken } = await supabase
+      .from("hoofdstukken")
+      .select("id")
+      .eq("module_id", moduleId);
+
+    if (!hoofdstukken || hoofdstukken.length === 0) return;
+    const hoofdstukIds = hoofdstukken.map((h) => h.id);
+
+    const { data: alleParagrafen } = await supabase
+      .from("paragrafen")
+      .select("id")
+      .in("hoofdstuk_id", hoofdstukIds);
+
+    const { data: alleQuizzen } = await supabase
+      .from("quizen")
+      .select("id")
+      .in("hoofdstuk_id", hoofdstukIds);
+
+    const totaal = (alleParagrafen?.length || 0) + (alleQuizzen?.length || 0);
+    if (totaal === 0) return;
+
+    let voltooidParagrafen = 0;
+    if (alleParagrafen && alleParagrafen.length > 0) {
+      const paragraafIds = alleParagrafen.map((p) => p.id);
+      const { data: alleOpgaves } = await supabase
+        .from("opgaves")
+        .select("id, paragraaf_id")
+        .in("paragraaf_id", paragraafIds);
+
+      if (alleOpgaves && alleOpgaves.length > 0) {
+        const opgaveIds = alleOpgaves.map((o) => o.id);
+        const { data: traineeScores } = await supabase
+          .from("scores")
+          .select("opgave_id")
+          .eq("trainee_email", email)
+          .in("opgave_id", opgaveIds);
+
+        const gescoordeParagrafen = new Set();
+        if (traineeScores) {
+          traineeScores.forEach((s) => {
+            const opgave = alleOpgaves.find((o) => o.id === s.opgave_id);
+            if (opgave) gescoordeParagrafen.add(opgave.paragraaf_id);
+          });
+        }
+        voltooidParagrafen = gescoordeParagrafen.size;
+      }
+    }
+
+    let voltooidQuizzen = 0;
+    if (alleQuizzen && alleQuizzen.length > 0) {
+      const quizIds = alleQuizzen.map((q) => q.id);
+      const { data: quizScores } = await supabase
+        .from("quiz_scores")
+        .select("quiz_id")
+        .eq("trainee_email", email)
+        .in("quiz_id", quizIds);
+
+      if (quizScores) {
+        const voltooideQuizIds = new Set(quizScores.map((s) => s.quiz_id));
+        voltooidQuizzen = voltooideQuizIds.size;
+      }
+    }
+
+    const voortgang = Math.round(
+      ((voltooidParagrafen + voltooidQuizzen) / totaal) * 100,
+    );
+
+    const { data: bestaand } = await supabase
+      .from("module_voortgang")
+      .select("id")
+      .eq("trainee_email", email)
+      .eq("module_id", moduleId)
+      .limit(1);
+
+    if (bestaand && bestaand.length > 0) {
+      await supabase
+        .from("module_voortgang")
+        .update({ voortgang })
+        .eq("id", bestaand[0].id);
+    } else {
+      await supabase
+        .from("module_voortgang")
+        .insert({ trainee_email: email, module_id: moduleId, voortgang });
+    }
+  }
+
   useEffect(() => {
     if (
       !gecontroleerd ||
@@ -177,11 +271,22 @@ export default function Paragraaf() {
           poging_nummer: volgendPoging,
         });
       }
+
+      console.log("moduleId:", moduleId);
+      console.log("scores:", scores);
+      console.log("opgaves lengte:", opgaves.length);
+      if (moduleId) {
+        console.log("berekeningVoortgang wordt aangeroepen");
+        await berekeningVoortgang();
+      } else {
+        console.log("moduleId is null, voortgang wordt niet berekend");
+      }
       setOpgeslagen(true);
     }
 
     slaOp();
-  }, [gecontroleerd, scores, opgaves, opgeslagen, email]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gecontroleerd, scores, opgaves, opgeslagen, email, moduleId]);
 
   const gemiddeldeScore =
     opgaves.length > 0
@@ -227,7 +332,6 @@ export default function Paragraaf() {
         fontFamily: "Inter, sans-serif",
       }}
     >
-      {/* Header */}
       <div
         style={{
           background: "white",
@@ -282,7 +386,6 @@ export default function Paragraaf() {
         )}
       </div>
 
-      {/* Opgaves */}
       <div
         style={{
           padding: "24px",
@@ -353,7 +456,6 @@ export default function Paragraaf() {
           </div>
         ))}
 
-        {/* Knoppen onderaan */}
         {opgaves.length > 0 && (
           <div
             style={{

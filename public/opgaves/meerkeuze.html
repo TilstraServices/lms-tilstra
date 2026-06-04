@@ -282,6 +282,7 @@
       let geselecteerd = null;
       let gecontroleerd = false;
       let opgaveData = null;
+      let heeftAntwoordGezien = false;
 
       async function laadOpgave() {
         if (!opgaveId) {
@@ -308,19 +309,19 @@
       function bouwOpgave(inhoud) {
         const root = document.getElementById("root");
         root.innerHTML = `
-      <div class="exercise">
-        <div class="exercise-title">${inhoud.vraag}</div>
-        <div class="options" id="options"></div>
-        <div class="actions">
-          <button class="btn btn-secondary" id="btnReset">Opnieuw</button>
-          <button class="btn btn-hint" id="btnToonAntwoord">Toon Antwoord</button>
-        </div>
-        <div class="feedback" id="feedback">
-          <span id="feedbackIcon"></span>
-          <span id="feedbackText"></span>
-        </div>
-      </div>
-    `;
+          <div class="exercise">
+            <div class="exercise-title">${inhoud.vraag}</div>
+            <div class="options" id="options"></div>
+            <div class="actions">
+              <button class="btn btn-secondary" id="btnReset">Opnieuw</button>
+              <button class="btn btn-hint" id="btnToonAntwoord">Toon Antwoord</button>
+            </div>
+            <div class="feedback" id="feedback">
+              <span id="feedbackIcon"></span>
+              <span id="feedbackText"></span>
+            </div>
+          </div>
+        `;
 
         const optionsEl = document.getElementById("options");
         inhoud.opties.forEach((optie, index) => {
@@ -388,24 +389,88 @@
         }
 
         window.parent.postMessage(
-          { type: "opgave_score", opgave_id: opgaveId, score: score },
+          {
+            type: "opgave_score",
+            opgave_id: opgaveId,
+            score: heeftAntwoordGezien ? 0 : score,
+          },
           "*",
         );
 
         return score;
       }
+      function toonAntwoordWaarschuwing(callback) {
+        const gezien = sessionStorage.getItem("toonAntwoordWaarschuwingGezien");
+        if (gezien) {
+          callback();
+          return;
+        }
+
+        // Maak popup aan
+        const overlay = document.createElement("div");
+        overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 1000;
+        display: flex; align-items: center; justify-content: center;
+      `;
+
+        overlay.innerHTML = `
+        <div style="background: white; border-radius: 12px; padding: 28px; max-width: 380px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+          <p style="font-size: 1rem; font-weight: 700; color: #1A1A1A; margin-bottom: 10px;">
+           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="#E65100" viewBox="0 0 256 256" style="vertical-align: middle; margin-right: 8px;"><path d="M236.8,188.09,149.35,36.22h0a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM222.93,203.8a8.5,8.5,0,0,1-7.48,4.2H40.55a8.5,8.5,0,0,1-7.48-4.2,7.59,7.59,0,0,1,0-7.72L120.52,44.21a8.75,8.75,0,0,1,15,0l87.45,151.87A7.59,7.59,0,0,1,222.93,203.8ZM120,144V104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,180Z"/></svg> Let op!
+          </p>
+          <p style="font-size: 0.9rem; color: #5F6368; margin-bottom: 20px; line-height: 1.6;">
+            Als je het antwoord bekijkt telt deze opgave <strong>niet meer mee</strong> voor je score, ook niet als je opnieuw probeert.
+          </p>
+          <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; cursor: pointer; font-size: 0.85rem; color: #5F6368;">
+            <input type="checkbox" id="nietMeerTonen" style="width: 16px; height: 16px; cursor: pointer;" />
+            Ik heb dit begrepen, toon deze melding niet meer
+          </label>
+          <div style="display: flex; gap: 10px;">
+            <button id="popupAnnuleren" style="flex: 1; padding: 9px; border-radius: 50px; border: 1px solid #DADCE0; background: transparent; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 600; color: #5F6368;">
+              Annuleren
+            </button>
+            <button id="popupBevestigen" style="flex: 1; padding: 9px; border-radius: 50px; border: none; background: #E65100; color: white; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 600;">
+              Toon toch
+            </button>
+          </div>
+        </div>
+      `;
+
+        document.body.appendChild(overlay);
+
+        document
+          .getElementById("popupBevestigen")
+          .addEventListener("click", () => {
+            if (document.getElementById("nietMeerTonen").checked) {
+              localStorage.setItem("toonAntwoordWaarschuwingGezien", "true");
+            }
+            document.body.removeChild(overlay);
+            callback();
+          });
+
+        document
+          .getElementById("popupAnnuleren")
+          .addEventListener("click", () => {
+            document.body.removeChild(overlay);
+          });
+      }
 
       function toonAntwoord() {
-        document.querySelectorAll(".option").forEach((opt) => {
-          if (opt.dataset.correct === "true") {
-            opt.classList.add("toon-correct");
-            opt.classList.remove("disabled");
-          }
+        toonAntwoordWaarschuwing(() => {
+          heeftAntwoordGezien = true;
+          document.querySelectorAll(".option").forEach((opt) => {
+            if (opt.dataset.correct === "true") {
+              opt.classList.add("toon-correct");
+              opt.classList.remove("disabled");
+            }
+          });
+          document.getElementById("btnToonAntwoord").style.display = "none";
         });
-        document.getElementById("btnToonAntwoord").style.display = "none";
       }
 
       function reset() {
+        heeftAntwoordGezien = false;
         gecontroleerd = false;
         geselecteerd = null;
         document.querySelectorAll(".option").forEach((opt) => {

@@ -385,7 +385,120 @@ export default function QuizContainer() {
       poging_nummer: volgendPoging,
     });
 
+    // Bereken voortgang
+    await berekeningVoortgang();
     setOpgeslagen(true);
+  }
+
+  async function berekeningVoortgang() {
+    // Haal module_id op via quiz → hoofdstuk
+    const { data: quizData } = await supabase
+      .from("quizen")
+      .select("hoofdstuk_id")
+      .eq("id", quizId)
+      .single();
+
+    if (!quizData) return;
+
+    const { data: hoofdstuk } = await supabase
+      .from("hoofdstukken")
+      .select("module_id")
+      .eq("id", quizData.hoofdstuk_id)
+      .single();
+
+    if (!hoofdstuk) return;
+    const moduleId = hoofdstuk.module_id;
+
+    // Haal alle hoofdstukken van de module op
+    const { data: hoofdstukken } = await supabase
+      .from("hoofdstukken")
+      .select("id")
+      .eq("module_id", moduleId);
+
+    if (!hoofdstukken || hoofdstukken.length === 0) return;
+    const hoofdstukIds = hoofdstukken.map((h) => h.id);
+
+    // Paragrafen
+    const { data: alleParagrafen } = await supabase
+      .from("paragrafen")
+      .select("id")
+      .in("hoofdstuk_id", hoofdstukIds);
+
+    // Quizzen
+    const { data: alleQuizzen } = await supabase
+      .from("quizen")
+      .select("id")
+      .in("hoofdstuk_id", hoofdstukIds);
+
+    const totaal = (alleParagrafen?.length || 0) + (alleQuizzen?.length || 0);
+    if (totaal === 0) return;
+
+    // Voltooide paragrafen
+    let voltooidParagrafen = 0;
+    if (alleParagrafen && alleParagrafen.length > 0) {
+      const paragraafIds = alleParagrafen.map((p) => p.id);
+      const { data: alleOpgaves } = await supabase
+        .from("opgaves")
+        .select("id, paragraaf_id")
+        .in("paragraaf_id", paragraafIds);
+
+      if (alleOpgaves && alleOpgaves.length > 0) {
+        const opgaveIds = alleOpgaves.map((o) => o.id);
+        const { data: traineeScores } = await supabase
+          .from("scores")
+          .select("opgave_id")
+          .eq("trainee_email", email)
+          .in("opgave_id", opgaveIds);
+
+        const gescoordeParagrafen = new Set();
+        if (traineeScores) {
+          traineeScores.forEach((s) => {
+            const opgave = alleOpgaves.find((o) => o.id === s.opgave_id);
+            if (opgave) gescoordeParagrafen.add(opgave.paragraaf_id);
+          });
+        }
+        voltooidParagrafen = gescoordeParagrafen.size;
+      }
+    }
+
+    // Voltooide quizzen
+    let voltooidQuizzen = 0;
+    if (alleQuizzen && alleQuizzen.length > 0) {
+      const quizIds = alleQuizzen.map((q) => q.id);
+      const { data: quizScores } = await supabase
+        .from("quiz_scores")
+        .select("quiz_id")
+        .eq("trainee_email", email)
+        .in("quiz_id", quizIds);
+
+      if (quizScores) {
+        const voltooideQuizIds = new Set(quizScores.map((s) => s.quiz_id));
+        voltooidQuizzen = voltooideQuizIds.size;
+      }
+    }
+
+    const voortgang = Math.round(
+      ((voltooidParagrafen + voltooidQuizzen) / totaal) * 100,
+    );
+
+    // Upsert module_voortgang
+    const { data: bestaand } = await supabase
+      .from("module_voortgang")
+      .select("id")
+      .eq("trainee_email", email)
+      .eq("module_id", moduleId)
+      .limit(1);
+
+    if (bestaand && bestaand.length > 0) {
+      await supabase
+        .from("module_voortgang")
+        .update({ voortgang })
+        .eq("id", bestaand[0].id);
+    } else {
+      await supabase
+        .from("module_voortgang")
+        .insert({ trainee_email: email, module_id: moduleId, voortgang });
+    }
   }
 
   function reset() {

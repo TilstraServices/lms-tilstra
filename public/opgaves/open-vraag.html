@@ -269,7 +269,6 @@
 
       function controleer() {
         if (gecontroleerd || !opgaveData) return 0;
-        gecontroleerd = true;
 
         const invoerWaarde = document.getElementById("antwoord").value.trim();
         if (!invoerWaarde) {
@@ -280,6 +279,8 @@
             "Deze opgave is leeg opgeslagen, vul een antwoord in.";
           return 0;
         }
+
+        gecontroleerd = true;
 
         const invoer = normaliseer(document.getElementById("antwoord").value);
         const modelantwoorden =
