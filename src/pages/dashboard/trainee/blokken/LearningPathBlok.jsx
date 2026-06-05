@@ -1,279 +1,497 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../../../../lib/supabase";
 
-// ── Skill tree definitie (aanpasbaar) ──
-const SKILL_TREE = [
-  {
-    id: "16227332-741f-4950-a57e-60f12f9612a0",
-    naam: "Test Modules",
-    categorie: "BKL",
-    pad: "BKL",
-    x: 200,
-    y: 300,
-    vereist: [],
+// ── Pad configuratie ──
+const PAD_CONFIG = {
+  stam: {
+    label: "Algemeen",
+    primair: "#5D4037",
+    licht: "#EFEBE9",
+    tekst: "#3E2723",
   },
-  {
-    id: "9b53d00a-239b-4dcd-ad13-b5f087c8ff24",
-    naam: "Test module 2",
-    categorie: "BKL",
-    pad: "BKL",
-    x: 500,
-    y: 300,
-    vereist: ["16227332-741f-4950-a57e-60f12f9612a0"],
+  payroll: {
+    label: "Payroll",
+    primair: "#2E7D32",
+    licht: "#E8F5E9",
+    tekst: "#1B5E20",
   },
-  {
-    id: "e57e47e0-7adf-4c3b-8d9a-4bd3f2537452",
-    naam: "Handboek NMBRS",
-    categorie: "NMBRS",
-    pad: "NMBRS",
-    x: 500,
-    y: 150,
-    vereist: [],
+  finance: {
+    label: "Finance",
+    primair: "#C62828",
+    licht: "#FFEBEE",
+    tekst: "#B71C1C",
   },
-];
-
-const PAD_KLEUREN = {
-  BKL: { primair: "#2E7D32", licht: "#E8F5E9" },
-  NMBRS: { primair: "#1565C0", licht: "#E3F2FD" },
-  Algemeen: { primair: "#6A1B9A", licht: "#F3E5F5" },
+  hr: {
+    label: "HR",
+    primair: "#6A1B9A",
+    licht: "#F3E5F5",
+    tekst: "#4A148C",
+  },
+  gedeeld: {
+    label: "Gedeeld",
+    primair: "#5D4037",
+    licht: "#EFEBE9",
+    tekst: "#3E2723",
+  },
 };
 
-function getModuleStijl(module, voortgangMap, scoreMap, activeModuleIds) {
-  const voortgang = voortgangMap[module.id];
-  const score = scoreMap[module.id];
-  const isActief = activeModuleIds.includes(module.id);
+// ── Categorie kleuren (linker rand op module blokje) ──
+const CATEGORIE_KLEUREN = {
+  BKL: "#2E7D32",
+  NMBRS: "#1565C0",
+  Excel: "#1B5E20",
+  Onboarding: "#E65100",
+  Algemeen: "#5D4037",
+};
+
+// ── Hardcoded skill tree (aanpasbaar) ──
+// pad = waar de module in de boom staat
+// categorie = kleur van de linker rand
+const SKILL_TREE = {
+  stam: [
+    {
+      id: "16227332-741f-4950-a57e-60f12f9612a0",
+      naam: "Test Modules",
+      categorie: "BKL",
+      vereist: [],
+    },
+    {
+      id: "9b53d00a-239b-4dcd-ad13-b5f087c8ff24",
+      naam: "Test module 2",
+      categorie: "BKL",
+      vereist: ["16227332-741f-4950-a57e-60f12f9612a0"],
+    },
+  ],
+  payroll: [
+    {
+      id: "e57e47e0-7adf-4c3b-8d9a-4bd3f2537452",
+      naam: "Handboek NMBRS",
+      categorie: "NMBRS",
+      vereist: [],
+    },
+  ],
+  finance: [],
+  hr: [],
+};
+
+function getModuleStatus(moduleId, voortgangMap, scoreMap, activeModuleIds) {
+  const isActief = activeModuleIds.includes(moduleId);
+  const voortgang = voortgangMap[moduleId] ?? 0;
+  const score = scoreMap[moduleId] ?? null;
   const isAfgerond = voortgang >= 100;
 
-  if (!isActief) {
-    return {
-      achtergrond: "white",
-      rand: "#BDBDBD",
-      randDikte: 2,
-      tekstKleur: "#9E9E9E",
-      opacity: 0.45,
-      label: null,
-      labelKleur: "#9E9E9E",
-    };
-  }
-
-  if (isAfgerond && score !== null) {
-    if (score < 50) {
-      return {
-        achtergrond: "white",
-        rand: "#C62828",
-        randDikte: 4,
-        tekstKleur: "#1A1A1A",
-        opacity: 1,
-        label: `${score}%`,
-        labelKleur: "#C62828",
-      };
-    } else if (score >= 80) {
-      return {
-        achtergrond: "white",
-        rand: "#DAA520",
-        randDikte: 4,
-        tekstKleur: "#1A1A1A",
-        opacity: 1,
-        label: `${score}%`,
-        labelKleur: "#DAA520",
-      };
-    } else if (score >= 65) {
-      return {
-        achtergrond: "white",
-        rand: "#A8A8A8",
-        randDikte: 4,
-        tekstKleur: "#1A1A1A",
-        opacity: 1,
-        label: `${score}%`,
-        labelKleur: "#A8A8A8",
-      };
-    } else {
-      return {
-        achtergrond: "white",
-        rand: "#A0522D",
-        randDikte: 4,
-        tekstKleur: "#1A1A1A",
-        opacity: 1,
-        label: `${score}%`,
-        labelKleur: "#A0522D",
-      };
-    }
-  }
-
-  // Actief maar nog niet afgerond
-  return {
-    achtergrond: "white",
-    rand: "#2E7D32",
-    randDikte: 2,
-    tekstKleur: "#1A1A1A",
-    opacity: 1,
-    label: voortgang > 0 ? `${voortgang}%` : "Te doen",
-    labelKleur: "#2E7D32",
-  };
+  if (!isActief) return { type: "inactief" };
+  if (!isAfgerond) return { type: "bezig", voortgang };
+  if (score === null) return { type: "bezig", voortgang };
+  if (score < 50) return { type: "gezakt", score };
+  if (score >= 80) return { type: "goud", score };
+  if (score >= 65) return { type: "zilver", score };
+  return { type: "brons", score };
 }
 
-function ModuleNode({ module, stijl, geselecteerd, onClick }) {
-  const breedte = 160;
-  const hoogte = 80;
+function getStatusStijl(status) {
+  switch (status.type) {
+    case "inactief":
+      return {
+        rand: "#BDBDBD",
+        randDikte: 2,
+        opacity: 0.4,
+        labelKleur: "#9E9E9E",
+        label: null,
+      };
+    case "bezig":
+      return {
+        rand: "#2E7D32",
+        randDikte: 2,
+        opacity: 1,
+        labelKleur: "#2E7D32",
+        label: status.voortgang > 0 ? `${status.voortgang}%` : "Te doen",
+      };
+    case "gezakt":
+      return {
+        rand: "#C62828",
+        randDikte: 3,
+        opacity: 1,
+        labelKleur: "#C62828",
+        label: `${status.score}%`,
+        glans: "rood",
+      };
+    case "goud":
+      return {
+        rand: "#DAA520",
+        randDikte: 3,
+        opacity: 1,
+        labelKleur: "#B8860B",
+        label: `${status.score}%`,
+        glans: "goud",
+      };
+    case "zilver":
+      return {
+        rand: "#9E9E9E",
+        randDikte: 3,
+        opacity: 1,
+        labelKleur: "#757575",
+        label: `${status.score}%`,
+        glans: "zilver",
+      };
+    case "brons":
+      return {
+        rand: "#A0522D",
+        randDikte: 3,
+        opacity: 1,
+        labelKleur: "#8B4513",
+        label: `${status.score}%`,
+        glans: "brons",
+      };
+    default:
+      return {
+        rand: "#2E7D32",
+        randDikte: 2,
+        opacity: 1,
+        labelKleur: "#2E7D32",
+        label: "Te doen",
+      };
+  }
+}
+
+const GLANS_GRADIENTEN = {
+  goud: "linear-gradient(135deg, #FFF9E6 0%, #FFF3CD 30%, #FFE082 60%, #FFF8E1 100%)",
+  zilver:
+    "linear-gradient(135deg, #FAFAFA 0%, #F0F0F0 30%, #E0E0E0 60%, #FAFAFA 100%)",
+  brons:
+    "linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 30%, #FFCC80 60%, #FFF3E0 100%)",
+  rood: "linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 30%, #EF9A9A 60%, #FFEBEE 100%)",
+};
+
+function ModuleBlokje({
+  module,
+  padConfig,
+
+  stijl,
+  geselecteerd,
+  onClick,
+}) {
+  const categorieKleur = CATEGORIE_KLEUREN[module.categorie] || "#9E9E9E";
+  const achtergrond = stijl.glans ? GLANS_GRADIENTEN[stijl.glans] : "white";
 
   return (
-    <g
+    <div
       onClick={onClick}
-      style={{ cursor: "pointer" }}
-      transform={`translate(${module.x - breedte / 2}, ${module.y - hoogte / 2})`}
+      title={module.naam}
+      style={{
+        position: "relative",
+        width: "140px",
+        minWidth: "140px",
+        height: "72px",
+        borderRadius: "10px",
+        background: achtergrond,
+        opacity: stijl.opacity,
+        cursor: "pointer",
+        boxShadow: geselecteerd
+          ? `0 0 0 3px ${padConfig.primair}, 0 4px 16px rgba(0,0,0,0.15)`
+          : "0 2px 8px rgba(0,0,0,0.10)",
+        transition: "box-shadow 0.15s, transform 0.15s",
+        transform: geselecteerd ? "translateY(-2px)" : "none",
+        overflow: "hidden",
+        flexShrink: 0,
+        // Dubbele rand: links = categorie, rechts = pad
+        borderLeft: `4px solid ${categorieKleur}`,
+        borderRight: `4px solid ${padConfig.primair}`,
+        borderTop: `2px solid ${stijl.rand}`,
+        borderBottom: `2px solid ${stijl.rand}`,
+      }}
     >
-      {/* Glans effect achtergrond */}
-      <defs>
-        <linearGradient
-          id={`glans-${module.id}`}
-          x1="0%"
-          y1="0%"
-          x2="100%"
-          y2="100%"
-        >
-          <stop offset="0%" stopColor="rgba(255,255,255,0.3)" />
-          <stop offset="50%" stopColor="rgba(255,255,255,0)" />
-          <stop offset="100%" stopColor="rgba(0,0,0,0.1)" />
-        </linearGradient>
-        <filter id={`schaduw-${module.id}`}>
-          <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.15" />
-        </filter>
-      </defs>
+      {/* Glans overlay */}
+      {stijl.glans && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "40%",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 100%)",
+            borderRadius: "10px 10px 0 0",
+            pointerEvents: "none",
+          }}
+        />
+      )}
 
-      {/* Hoofdrechthoek */}
-      <rect
-        width={breedte}
-        height={hoogte}
-        rx="10"
-        ry="10"
-        fill={
-          stijl.achtergrond.includes("gradient")
-            ? "url(#glans-" + module.id + ")"
-            : stijl.achtergrond
-        }
-        stroke={stijl.rand}
-        strokeWidth={geselecteerd ? stijl.randDikte + 1 : stijl.randDikte}
-        opacity={stijl.opacity}
-        filter={`url(#schaduw-${module.id})`}
+      {/* Inhoud */}
+      <div
         style={{
-          transition: "all 0.2s",
+          padding: "8px 10px",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
         }}
-      />
-
-      {/* Glans overlay voor metalen */}
-      {stijl.achtergrond.includes("gradient") && (
-        <rect
-          width={breedte}
-          height={hoogte}
-          rx="10"
-          ry="10"
-          fill={stijl.achtergrond}
-          stroke={stijl.rand}
-          strokeWidth={geselecteerd ? 3 : 2}
-          opacity={stijl.opacity}
-        />
-      )}
-
-      {/* Naam */}
-      <text
-        x={breedte / 2}
-        y={hoogte / 2 - 8}
-        textAnchor="middle"
-        fill={stijl.tekstKleur}
-        fontSize="13"
-        fontWeight="600"
-        fontFamily="Inter, sans-serif"
-        opacity={stijl.opacity}
       >
-        {module.naam.length > 18
-          ? module.naam.substring(0, 16) + "…"
-          : module.naam}
-      </text>
+        <p
+          style={{
+            fontSize: "0.78rem",
+            fontWeight: 700,
+            color: stijl.opacity < 1 ? "#9E9E9E" : "#1A1A1A",
+            lineHeight: 1.3,
+            overflow: "hidden",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+          }}
+        >
+          {module.naam}
+        </p>
 
-      {/* Categorie badge */}
-      <rect
-        x={breedte / 2 - 20}
-        y={hoogte / 2 + 4}
-        width={40}
-        height={16}
-        rx="8"
-        fill={stijl.label ? stijl.labelKleur + "20" : "#F5F5F5"}
-        opacity={stijl.opacity}
-      />
-      <text
-        x={breedte / 2}
-        y={hoogte / 2 + 15}
-        textAnchor="middle"
-        fill={stijl.labelKleur || "#9E9E9E"}
-        fontSize="10"
-        fontWeight="700"
-        fontFamily="Inter, sans-serif"
-        opacity={stijl.opacity}
-      >
-        {stijl.label || module.categorie}
-      </text>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {/* Categorie pill */}
+          <span
+            style={{
+              fontSize: "0.62rem",
+              fontWeight: 700,
+              color: categorieKleur,
+              background: categorieKleur + "18",
+              padding: "1px 6px",
+              borderRadius: "50px",
+            }}
+          >
+            {module.categorie}
+          </span>
 
-      {/* Geselecteerd highlight */}
-      {geselecteerd && (
-        <rect
-          width={breedte}
-          height={hoogte}
-          rx="10"
-          ry="10"
-          fill="none"
-          stroke="#2E7D32"
-          strokeWidth="3"
-          strokeDasharray="4,2"
-          opacity="0.5"
-        />
-      )}
-    </g>
+          {/* Status label */}
+          {stijl.label && (
+            <span
+              style={{
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                color: stijl.labelKleur,
+              }}
+            >
+              {stijl.label}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
-function DetailPanel({ module, voortgang, score, actief, onSluit }) {
-  const padKleur = PAD_KLEUREN[module.categorie] || PAD_KLEUREN.Algemeen;
+function PijlVerbinding({ gelockt }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        flexShrink: 0,
+        width: "32px",
+      }}
+    >
+      <svg width="32" height="16" viewBox="0 0 32 16">
+        <line
+          x1="0"
+          y1="8"
+          x2="24"
+          y2="8"
+          stroke={gelockt ? "#BDBDBD" : "#9E9E9E"}
+          strokeWidth="2"
+          strokeDasharray={gelockt ? "4,3" : "none"}
+        />
+        <polygon
+          points="24,4 32,8 24,12"
+          fill={gelockt ? "#BDBDBD" : "#9E9E9E"}
+        />
+      </svg>
+    </div>
+  );
+}
+
+function PadRij({
+  modules,
+  padConfig,
+  voortgangMap,
+  scoreMap,
+  activeModuleIds,
+  geselecteerd,
+  onSelect,
+}) {
+  if (modules.length === 0) return null;
 
   return (
     <div
       style={{
-        position: "absolute",
-        bottom: "20px",
-        left: "50%",
-        transform: "translateX(-50%)",
+        background: padConfig.licht,
+        borderRadius: "12px",
+        padding: "16px 20px",
+        border: `1px solid ${padConfig.primair}30`,
+      }}
+    >
+      {/* Pad label */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          marginBottom: "14px",
+        }}
+      >
+        <div
+          style={{
+            width: "10px",
+            height: "10px",
+            borderRadius: "50%",
+            background: padConfig.primair,
+          }}
+        />
+        <span
+          style={{
+            fontSize: "0.72rem",
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: padConfig.tekst,
+          }}
+        >
+          {padConfig.label}
+        </span>
+      </div>
+
+      {/* Modules rij */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0",
+          overflowX: "auto",
+          paddingBottom: "4px",
+        }}
+      >
+        {modules.map((module, index) => {
+          const status = getModuleStatus(
+            module.id,
+            voortgangMap,
+            scoreMap,
+            activeModuleIds,
+          );
+          const stijl = getStatusStijl(status);
+          const vorigeAfgerond =
+            index === 0 ||
+            (() => {
+              const vorigeStatus = getModuleStatus(
+                modules[index - 1].id,
+                voortgangMap,
+                scoreMap,
+                activeModuleIds,
+              );
+              return (
+                vorigeStatus.type === "goud" ||
+                vorigeStatus.type === "zilver" ||
+                vorigeStatus.type === "brons"
+              );
+            })();
+
+          return (
+            <div
+              key={module.id}
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              {index > 0 && <PijlVerbinding gelockt={!vorigeAfgerond} />}
+              <ModuleBlokje
+                module={module}
+                padConfig={padConfig}
+                status={status}
+                stijl={stijl}
+                geselecteerd={geselecteerd === module.id}
+                onClick={() =>
+                  onSelect(module.id === geselecteerd ? null : module.id)
+                }
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DetailPanel({
+  moduleId,
+  padRijen,
+  voortgangMap,
+  scoreMap,
+  activeModuleIds,
+  onSluit,
+}) {
+  // Zoek module in alle rijen
+  let module = null;
+  let padKey = null;
+  for (const [key, modules] of Object.entries(padRijen)) {
+    const gevonden = modules.find((m) => m.id === moduleId);
+    if (gevonden) {
+      module = gevonden;
+      padKey = key;
+      break;
+    }
+  }
+  if (!module) return null;
+
+  const padConfig = PAD_CONFIG[padKey] || PAD_CONFIG.stam;
+  const categorieKleur = CATEGORIE_KLEUREN[module.categorie] || "#9E9E9E";
+  const voortgang = voortgangMap[moduleId] ?? 0;
+  const score = scoreMap[moduleId] ?? null;
+  const actief = activeModuleIds.includes(moduleId);
+
+  return (
+    <div
+      style={{
         background: "white",
         borderRadius: "12px",
         padding: "20px 24px",
-        width: "360px",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-        border: `2px solid ${padKleur.primair}`,
-        zIndex: 10,
+        border: `2px solid ${padConfig.primair}`,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+        marginTop: "16px",
       }}
-      className="uitklap-animatie"
     >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-start",
-          marginBottom: "12px",
+          marginBottom: "14px",
         }}
       >
         <div>
-          <span
-            style={{
-              background: padKleur.licht,
-              color: padKleur.primair,
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              padding: "2px 8px",
-              borderRadius: "50px",
-              display: "inline-block",
-              marginBottom: "6px",
-            }}
-          >
-            {module.categorie}
-          </span>
+          <div style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
+            <span
+              style={{
+                background: categorieKleur + "18",
+                color: categorieKleur,
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: "50px",
+              }}
+            >
+              {module.categorie}
+            </span>
+            <span
+              style={{
+                background: padConfig.licht,
+                color: padConfig.primair,
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: "50px",
+              }}
+            >
+              {padConfig.label}
+            </span>
+          </div>
           <p style={{ fontSize: "1rem", fontWeight: 700, color: "#1A1A1A" }}>
             {module.naam}
           </p>
@@ -285,7 +503,8 @@ function DetailPanel({ module, voortgang, score, actief, onSluit }) {
             border: "none",
             cursor: "pointer",
             color: "#9E9E9E",
-            fontSize: "1.2rem",
+            fontSize: "1.1rem",
+            padding: "0",
           }}
         >
           ✕
@@ -305,7 +524,7 @@ function DetailPanel({ module, voortgang, score, actief, onSluit }) {
         >
           <p
             style={{
-              fontSize: "0.7rem",
+              fontSize: "0.68rem",
               fontWeight: 700,
               textTransform: "uppercase",
               color: "#9E9E9E",
@@ -318,10 +537,10 @@ function DetailPanel({ module, voortgang, score, actief, onSluit }) {
             style={{
               fontSize: "1.1rem",
               fontWeight: 700,
-              color: actief ? padKleur.primair : "#9E9E9E",
+              color: actief ? padConfig.primair : "#9E9E9E",
             }}
           >
-            {actief && voortgang !== undefined ? `${voortgang}%` : "—"}
+            {actief ? `${voortgang}%` : "—"}
           </p>
         </div>
         <div
@@ -334,7 +553,7 @@ function DetailPanel({ module, voortgang, score, actief, onSluit }) {
         >
           <p
             style={{
-              fontSize: "0.7rem",
+              fontSize: "0.68rem",
               fontWeight: 700,
               textTransform: "uppercase",
               color: "#9E9E9E",
@@ -355,9 +574,7 @@ function DetailPanel({ module, voortgang, score, actief, onSluit }) {
                   : "#9E9E9E",
             }}
           >
-            {actief && score !== null && score !== undefined
-              ? `${score}%`
-              : "—"}
+            {actief && score !== null ? `${score}%` : "—"}
           </p>
         </div>
       </div>
@@ -384,55 +601,48 @@ export default function LearningPathBlok({ email }) {
   const [activeModuleIds, setActiveModuleIds] = useState([]);
   const [geselecteerd, setGeselecteerd] = useState(null);
   const [laden, setLaden] = useState(true);
-  const containerRef = useRef(null);
-
-  async function laadData() {
-    setLaden(true);
-
-    // Laad learning path
-    const { data: lp } = await supabase
-      .from("learning_path")
-      .select("module_id")
-      .eq("trainee_email", email)
-      .eq("actief", true);
-    setActiveModuleIds(lp ? lp.map((l) => l.module_id) : []);
-
-    // Laad voortgang + score in één query
-    const moduleIds = SKILL_TREE.map((m) => m.id);
-    const { data: voortgangData } = await supabase
-      .from("module_voortgang")
-      .select("module_id, voortgang, gem_score")
-      .eq("trainee_email", email)
-      .in("module_id", moduleIds);
-
-    const vMap = {};
-    const sMap = {};
-    if (voortgangData) {
-      voortgangData.forEach((v) => {
-        vMap[v.module_id] = v.voortgang;
-        sMap[v.module_id] = v.gem_score;
-      });
-    }
-    setVoortgangMap(vMap);
-    setScoreMap(sMap);
-    setLaden(false);
-  }
+  const [indexOpen, setIndexOpen] = useState(false);
 
   useEffect(() => {
-    async function laadEnStart() {
-      if (email) await laadData();
+    async function laadData() {
+      if (!email) return;
+      setLaden(true);
+
+      // Alle module IDs uit skill tree
+      const alleIds = Object.values(SKILL_TREE)
+        .flat()
+        .map((m) => m.id);
+
+      // 3 queries parallel
+      const [lpRes, voortgangRes] = await Promise.all([
+        supabase
+          .from("learning_path")
+          .select("module_id")
+          .eq("trainee_email", email)
+          .eq("actief", true),
+        supabase
+          .from("module_voortgang")
+          .select("module_id, voortgang, gem_score")
+          .eq("trainee_email", email)
+          .in("module_id", alleIds),
+      ]);
+
+      setActiveModuleIds(lpRes.data ? lpRes.data.map((l) => l.module_id) : []);
+
+      const vMap = {};
+      const sMap = {};
+      if (voortgangRes.data) {
+        voortgangRes.data.forEach((v) => {
+          vMap[v.module_id] = v.voortgang;
+          sMap[v.module_id] = v.gem_score;
+        });
+      }
+      setVoortgangMap(vMap);
+      setScoreMap(sMap);
+      setLaden(false);
     }
-    laadEnStart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    laadData();
   }, [email]);
-
-  // Bereken canvas grootte
-  const maxX = Math.max(...SKILL_TREE.map((m) => m.x)) + 150;
-  const maxY = Math.max(...SKILL_TREE.map((m) => m.y)) + 120;
-  const canvasBreed = Math.max(maxX, 800);
-  const canvasHoog = Math.max(maxY, 500);
-
-  const geselecteerdeModule = SKILL_TREE.find((m) => m.id === geselecteerd);
 
   if (laden)
     return (
@@ -447,10 +657,12 @@ export default function LearningPathBlok({ email }) {
       </div>
     );
 
+  const PAD_VOLGORDE = ["stam", "payroll", "finance", "hr"];
+
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ padding: "24px 28px" }}>
       {/* Header */}
-      <div style={{ marginBottom: "16px" }}>
+      <div style={{ marginBottom: "20px" }}>
         <p
           style={{
             fontSize: "1.1rem",
@@ -471,137 +683,163 @@ export default function LearningPathBlok({ email }) {
         </p>
       </div>
 
-      {/* Canvas */}
-      <div
-        ref={containerRef}
-        style={{
-          width: "100%",
-          overflowX: "auto",
-          background: "white",
-          borderRadius: "var(--radius)",
-          border: "1px solid var(--grijs-200)",
-          boxShadow: "var(--schaduw)",
-          position: "relative",
-        }}
-      >
-        <svg
-          width={canvasBreed}
-          height={canvasHoog}
-          style={{ display: "block" }}
-        >
-          {/* Verbindingslijnen */}
-          {SKILL_TREE.map((module) =>
-            module.vereist.map((vereistId) => {
-              const van = SKILL_TREE.find((m) => m.id === vereistId);
-              if (!van) return null;
-              return (
-                <line
-                  key={`${vereistId}-${module.id}`}
-                  x1={van.x + 80}
-                  y1={van.y}
-                  x2={module.x - 80}
-                  y2={module.y}
-                  stroke="#DADCE0"
-                  strokeWidth="2"
-                  strokeDasharray="8,4"
-                />
-              );
-            }),
-          )}
+      {/* Rijen */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {PAD_VOLGORDE.map((pad, index) => {
+          const modules = SKILL_TREE[pad] || [];
+          if (modules.length === 0) return null;
+          const config = PAD_CONFIG[pad];
 
-          {/* Pad labels */}
-          <text
-            x="20"
-            y="160"
-            fill="#1565C0"
-            fontSize="11"
-            fontWeight="700"
-            fontFamily="Inter, sans-serif"
-            opacity="0.6"
-            style={{ textTransform: "uppercase" }}
-          >
-            NMBRS
-          </text>
-          <text
-            x="20"
-            y="310"
-            fill="#2E7D32"
-            fontSize="11"
-            fontWeight="700"
-            fontFamily="Inter, sans-serif"
-            opacity="0.6"
-          >
-            BKL
-          </text>
+          return (
+            <div key={pad}>
+              {/* Scheidingslijn tussen stam en paths */}
+              {index === 1 && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    marginBottom: "12px",
+                    marginTop: "4px",
+                  }}
+                >
+                  <div
+                    style={{ flex: 1, height: "1px", background: "#E0E0E0" }}
+                  />
+                  <span
+                    style={{
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      color: "#BDBDBD",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    Specialisatie paths
+                  </span>
+                  <div
+                    style={{ flex: 1, height: "1px", background: "#E0E0E0" }}
+                  />
+                </div>
+              )}
 
-          {/* Module nodes */}
-          {SKILL_TREE.map((module) => {
-            const stijl = getModuleStijl(
-              module,
-              voortgangMap,
-              scoreMap,
-              activeModuleIds,
-            );
-            return (
-              <ModuleNode
-                key={module.id}
-                module={module}
-                stijl={stijl}
-                geselecteerd={geselecteerd === module.id}
-                onClick={() =>
-                  setGeselecteerd(geselecteerd === module.id ? null : module.id)
-                }
+              <PadRij
+                pad={pad}
+                modules={modules}
+                padConfig={config}
+                voortgangMap={voortgangMap}
+                scoreMap={scoreMap}
+                activeModuleIds={activeModuleIds}
+                geselecteerd={geselecteerd}
+                onSelect={setGeselecteerd}
               />
-            );
-          })}
-        </svg>
-
-        {/* Detail panel */}
-        {geselecteerdeModule && (
-          <DetailPanel
-            module={geselecteerdeModule}
-            voortgang={voortgangMap[geselecteerdeModule.id]}
-            score={scoreMap[geselecteerdeModule.id]}
-            actief={activeModuleIds.includes(geselecteerdeModule.id)}
-            onSluit={() => setGeselecteerd(null)}
-          />
-        )}
+            </div>
+          );
+        })}
       </div>
+
+      {/* Detail panel */}
+      {geselecteerd && (
+        <DetailPanel
+          moduleId={geselecteerd}
+          padRijen={SKILL_TREE}
+          voortgangMap={voortgangMap}
+          scoreMap={scoreMap}
+          activeModuleIds={activeModuleIds}
+          onSluit={() => setGeselecteerd(null)}
+        />
+      )}
 
       {/* Legenda */}
       <div
         style={{
-          display: "flex",
-          gap: "16px",
-          marginTop: "12px",
-          flexWrap: "wrap",
+          marginTop: "16px",
+          position: "relative",
+          display: "inline-block",
+          float: "left",
         }}
       >
-        {[
-          { kleur: "#2E7D32", label: "Te doen / Bezig" },
-          { kleur: "#DAA520", label: "Goud (≥80%)" },
-          { kleur: "#A8A8A8", label: "Zilver (65-80%)" },
-          { kleur: "#A0522D", label: "Brons (50-65%)" },
-          { kleur: "#C62828", label: "Niet gehaald (<50%)" },
-          { kleur: "#9E9E9E", label: "Niet in jouw pad" },
-        ].map((item) => (
-          <div
-            key={item.label}
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
-          >
+        <button
+          onClick={() => setIndexOpen((v) => !v)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "#F0F0F0",
+            border: "none",
+            borderRadius: "6px",
+            padding: "5px 10px",
+            cursor: "pointer",
+            color: "#9E9E9E",
+            fontSize: "0.75rem",
+            fontWeight: 600,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 256 256" fill="#9E9E9E">
+            <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a16,16,0,1,1,16,16A16,16,0,0,1,112,84Z" />
+          </svg>
+          Index
+        </button>
+
+        {/* Popup */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 8px)",
+            left: "0",
+            background: "white",
+            border: "1px solid #E0E0E0",
+            borderRadius: "8px",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+            padding: indexOpen ? "10px 14px" : "0 14px",
+            overflow: "hidden",
+            maxHeight: indexOpen ? "300px" : "0px",
+            opacity: indexOpen ? 1 : 0,
+            transition:
+              "max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease",
+            pointerEvents: indexOpen ? "auto" : "none",
+            minWidth: "180px",
+            zIndex: 20,
+          }}
+        >
+          {[
+            { kleur: "#2E7D32", label: "Te doen / Bezig" },
+            { kleur: "#DAA520", label: "Goud (≥80%)" },
+            { kleur: "#9E9E9E", label: "Zilver (65-80%)" },
+            { kleur: "#A0522D", label: "Brons (50-65%)" },
+            { kleur: "#C62828", label: "Niet gehaald (<50%)" },
+            { kleur: "#BDBDBD", label: "Niet in jouw pad" },
+          ].map((item) => (
             <div
+              key={item.label}
               style={{
-                width: "12px",
-                height: "12px",
-                borderRadius: "3px",
-                background: item.kleur,
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "5px 0",
               }}
-            />
-            <span style={{ fontSize: "0.75rem", color: "var(--grijs-700)" }}>
-              {item.label}
-            </span>
-          </div>
-        ))}
+            >
+              <div
+                style={{
+                  width: "12px",
+                  height: "12px",
+                  borderRadius: "3px",
+                  background: item.kleur,
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  color: "var(--grijs-700)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
