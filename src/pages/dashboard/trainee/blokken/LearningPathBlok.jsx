@@ -21,12 +21,7 @@ const PAD_CONFIG = {
     licht: "#FFEBEE",
     tekst: "#B71C1C",
   },
-  hr: {
-    label: "HR",
-    primair: "#6A1B9A",
-    licht: "#F3E5F5",
-    tekst: "#4A148C",
-  },
+  hr: { label: "HR", primair: "#6A1B9A", licht: "#F3E5F5", tekst: "#4A148C" },
   gedeeld: {
     label: "Gedeeld",
     primair: "#5D4037",
@@ -42,36 +37,6 @@ const CATEGORIE_KLEUREN = {
   Excel: "#1B5E20",
   Onboarding: "#E65100",
   Algemeen: "#5D4037",
-};
-
-// ── Hardcoded skill tree (aanpasbaar) ──
-// pad = waar de module in de boom staat
-// categorie = kleur van de linker rand
-const SKILL_TREE = {
-  stam: [
-    {
-      id: "16227332-741f-4950-a57e-60f12f9612a0",
-      naam: "Test Modules",
-      categorie: "BKL",
-      vereist: [],
-    },
-    {
-      id: "9b53d00a-239b-4dcd-ad13-b5f087c8ff24",
-      naam: "Test module 2",
-      categorie: "BKL",
-      vereist: ["16227332-741f-4950-a57e-60f12f9612a0"],
-    },
-  ],
-  payroll: [
-    {
-      id: "e57e47e0-7adf-4c3b-8d9a-4bd3f2537452",
-      naam: "Handboek NMBRS",
-      categorie: "NMBRS",
-      vereist: [],
-    },
-  ],
-  finance: [],
-  hr: [],
 };
 
 function getModuleStatus(moduleId, voortgangMap, scoreMap, activeModuleIds) {
@@ -163,14 +128,7 @@ const GLANS_GRADIENTEN = {
   rood: "linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 30%, #EF9A9A 60%, #FFEBEE 100%)",
 };
 
-function ModuleBlokje({
-  module,
-  padConfig,
-
-  stijl,
-  geselecteerd,
-  onClick,
-}) {
+function ModuleBlokje({ module, padConfig, stijl, geselecteerd, onClick }) {
   const categorieKleur = CATEGORIE_KLEUREN[module.categorie] || "#9E9E9E";
   const achtergrond = stijl.glans ? GLANS_GRADIENTEN[stijl.glans] : "white";
 
@@ -194,14 +152,12 @@ function ModuleBlokje({
         transform: geselecteerd ? "translateY(-2px)" : "none",
         overflow: "hidden",
         flexShrink: 0,
-        // Dubbele rand: links = categorie, rechts = pad
         borderLeft: `4px solid ${categorieKleur}`,
         borderRight: `4px solid ${padConfig.primair}`,
         borderTop: `2px solid ${stijl.rand}`,
         borderBottom: `2px solid ${stijl.rand}`,
       }}
     >
-      {/* Glans overlay */}
       {stijl.glans && (
         <div
           style={{
@@ -217,8 +173,6 @@ function ModuleBlokje({
           }}
         />
       )}
-
-      {/* Inhoud */}
       <div
         style={{
           padding: "8px 10px",
@@ -242,7 +196,6 @@ function ModuleBlokje({
         >
           {module.naam}
         </p>
-
         <div
           style={{
             display: "flex",
@@ -250,7 +203,6 @@ function ModuleBlokje({
             alignItems: "center",
           }}
         >
-          {/* Categorie pill */}
           <span
             style={{
               fontSize: "0.62rem",
@@ -263,8 +215,6 @@ function ModuleBlokje({
           >
             {module.categorie}
           </span>
-
-          {/* Status label */}
           {stijl.label && (
             <span
               style={{
@@ -326,12 +276,11 @@ function PadRij({
     <div
       style={{
         background: padConfig.licht,
-        borderRadius: "12px",
         padding: "16px 20px",
-        border: `1px solid ${padConfig.primair}30`,
+        borderTop: `1px solid ${padConfig.primair}30`,
+        borderBottom: `1px solid ${padConfig.primair}30`,
       }}
     >
-      {/* Pad label */}
       <div
         style={{
           display: "flex",
@@ -360,8 +309,6 @@ function PadRij({
           {padConfig.label}
         </span>
       </div>
-
-      {/* Modules rij */}
       <div
         style={{
           display: "flex",
@@ -404,7 +351,6 @@ function PadRij({
               <ModuleBlokje
                 module={module}
                 padConfig={padConfig}
-                status={status}
                 stijl={stijl}
                 geselecteerd={geselecteerd === module.id}
                 onClick={() =>
@@ -421,16 +367,15 @@ function PadRij({
 
 function DetailPanel({
   moduleId,
-  padRijen,
+  skillTree,
   voortgangMap,
   scoreMap,
   activeModuleIds,
   onSluit,
 }) {
-  // Zoek module in alle rijen
   let module = null;
   let padKey = null;
-  for (const [key, modules] of Object.entries(padRijen)) {
+  for (const [key, modules] of Object.entries(skillTree)) {
     const gevonden = modules.find((m) => m.id === moduleId);
     if (gevonden) {
       module = gevonden;
@@ -510,7 +455,6 @@ function DetailPanel({
           ✕
         </button>
       </div>
-
       <div
         style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}
       >
@@ -578,7 +522,6 @@ function DetailPanel({
           </p>
         </div>
       </div>
-
       {!actief && (
         <p
           style={{
@@ -595,10 +538,19 @@ function DetailPanel({
   );
 }
 
+const PAD_VOLGORDE = ["stam", "payroll", "finance", "hr"];
+
 export default function LearningPathBlok({ email }) {
+  const [skillTree, setSkillTree] = useState({
+    stam: [],
+    payroll: [],
+    finance: [],
+    hr: [],
+  });
   const [voortgangMap, setVoortgangMap] = useState({});
   const [scoreMap, setScoreMap] = useState({});
   const [activeModuleIds, setActiveModuleIds] = useState([]);
+
   const [geselecteerd, setGeselecteerd] = useState(null);
   const [laden, setLaden] = useState(true);
   const [indexOpen, setIndexOpen] = useState(false);
@@ -608,27 +560,49 @@ export default function LearningPathBlok({ email }) {
       if (!email) return;
       setLaden(true);
 
-      // Alle module IDs uit skill tree
-      const alleIds = Object.values(SKILL_TREE)
-        .flat()
-        .map((m) => m.id);
-
       // 3 queries parallel
-      const [lpRes, voortgangRes] = await Promise.all([
+      const [modulesRes, lpRes, voortgangRes] = await Promise.all([
+        supabase.from("modules").select("id, naam, categorie, pad, volgorde"),
         supabase
           .from("learning_path")
-          .select("module_id")
+          .select("module_id, volgorde")
           .eq("trainee_email", email)
           .eq("actief", true),
         supabase
           .from("module_voortgang")
           .select("module_id, voortgang, gem_score")
-          .eq("trainee_email", email)
-          .in("module_id", alleIds),
+          .eq("trainee_email", email),
       ]);
+
+      // Persoonlijke volgorde map: module_id -> volgorde
+      const persVolgorde = {};
+      if (lpRes.data) {
+        lpRes.data.forEach((l) => {
+          if (l.volgorde !== null) persVolgorde[l.module_id] = l.volgorde;
+        });
+      }
 
       setActiveModuleIds(lpRes.data ? lpRes.data.map((l) => l.module_id) : []);
 
+      // Groepeer modules per pad, sorteer op persoonlijke volgorde → standaard volgorde
+      const boom = { stam: [], payroll: [], finance: [], hr: [] };
+      if (modulesRes.data) {
+        modulesRes.data.forEach((m) => {
+          const pad = m.pad || "stam";
+          if (boom[pad]) boom[pad].push(m);
+        });
+        // Sorteer elke rij
+        Object.keys(boom).forEach((pad) => {
+          boom[pad].sort((a, b) => {
+            const va = persVolgorde[a.id] ?? a.volgorde ?? 999;
+            const vb = persVolgorde[b.id] ?? b.volgorde ?? 999;
+            return va - vb;
+          });
+        });
+      }
+      setSkillTree(boom);
+
+      // Voortgang en scores
       const vMap = {};
       const sMap = {};
       if (voortgangRes.data) {
@@ -657,21 +631,10 @@ export default function LearningPathBlok({ email }) {
       </div>
     );
 
-  const PAD_VOLGORDE = ["stam", "payroll", "finance", "hr"];
-
   return (
     <div style={{ padding: "24px 28px" }}>
       {/* Header */}
       <div style={{ marginBottom: "20px" }}>
-        <p
-          style={{
-            fontSize: "1.1rem",
-            fontWeight: 700,
-            color: "var(--grijs-900)",
-          }}
-        >
-          Learning Path
-        </p>
         <p
           style={{
             fontSize: "0.82rem",
@@ -686,13 +649,12 @@ export default function LearningPathBlok({ email }) {
       {/* Rijen */}
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {PAD_VOLGORDE.map((pad, index) => {
-          const modules = SKILL_TREE[pad] || [];
+          const modules = skillTree[pad] || [];
           if (modules.length === 0) return null;
           const config = PAD_CONFIG[pad];
 
           return (
             <div key={pad}>
-              {/* Scheidingslijn tussen stam en paths */}
               {index === 1 && (
                 <div
                   style={{
@@ -706,33 +668,19 @@ export default function LearningPathBlok({ email }) {
                   <div
                     style={{ flex: 1, height: "1px", background: "#E0E0E0" }}
                   />
-                  <span
-                    style={{
-                      fontSize: "0.68rem",
-                      fontWeight: 700,
-                      color: "#BDBDBD",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                    }}
-                  >
-                    Specialisatie paths
-                  </span>
-                  <div
-                    style={{ flex: 1, height: "1px", background: "#E0E0E0" }}
-                  />
                 </div>
               )}
-
-              <PadRij
-                pad={pad}
-                modules={modules}
-                padConfig={config}
-                voortgangMap={voortgangMap}
-                scoreMap={scoreMap}
-                activeModuleIds={activeModuleIds}
-                geselecteerd={geselecteerd}
-                onSelect={setGeselecteerd}
-              />
+              <div style={{ marginLeft: pad === "stam" ? "0" : "32px" }}>
+                <PadRij
+                  modules={modules}
+                  padConfig={config}
+                  voortgangMap={voortgangMap}
+                  scoreMap={scoreMap}
+                  activeModuleIds={activeModuleIds}
+                  geselecteerd={geselecteerd}
+                  onSelect={setGeselecteerd}
+                />
+              </div>
             </div>
           );
         })}
@@ -742,7 +690,7 @@ export default function LearningPathBlok({ email }) {
       {geselecteerd && (
         <DetailPanel
           moduleId={geselecteerd}
-          padRijen={SKILL_TREE}
+          skillTree={skillTree}
           voortgangMap={voortgangMap}
           scoreMap={scoreMap}
           activeModuleIds={activeModuleIds}
@@ -750,7 +698,7 @@ export default function LearningPathBlok({ email }) {
         />
       )}
 
-      {/* Legenda */}
+      {/* Index knop + popup */}
       <div
         style={{
           marginTop: "16px",
@@ -780,8 +728,6 @@ export default function LearningPathBlok({ email }) {
           </svg>
           Index
         </button>
-
-        {/* Popup */}
         <div
           style={{
             position: "absolute",
