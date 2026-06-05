@@ -174,6 +174,8 @@ export default function Paragraaf() {
     if (totaal === 0) return;
 
     let voltooidParagrafen = 0;
+    let gemScore = null;
+
     if (alleParagrafen && alleParagrafen.length > 0) {
       const paragraafIds = alleParagrafen.map((p) => p.id);
       const { data: alleOpgaves } = await supabase
@@ -183,11 +185,21 @@ export default function Paragraaf() {
 
       if (alleOpgaves && alleOpgaves.length > 0) {
         const opgaveIds = alleOpgaves.map((o) => o.id);
-        const { data: traineeScores } = await supabase
+        const { data: alleTraineeScores } = await supabase
           .from("scores")
-          .select("opgave_id")
+          .select("opgave_id, score, poging_nummer")
           .eq("trainee_email", email)
-          .in("opgave_id", opgaveIds);
+          .in("opgave_id", opgaveIds)
+          .order("poging_nummer", { ascending: false });
+
+        // Houd alleen de laatste poging per opgave
+        const laasteScoresMap = {};
+        (alleTraineeScores || []).forEach((s) => {
+          if (!laasteScoresMap[s.opgave_id]) {
+            laasteScoresMap[s.opgave_id] = s;
+          }
+        });
+        const traineeScores = Object.values(laasteScoresMap);
 
         const gescoordeParagrafen = new Set();
         if (traineeScores) {
@@ -195,6 +207,12 @@ export default function Paragraaf() {
             const opgave = alleOpgaves.find((o) => o.id === s.opgave_id);
             if (opgave) gescoordeParagrafen.add(opgave.paragraaf_id);
           });
+          if (traineeScores.length > 0) {
+            gemScore = Math.round(
+              traineeScores.reduce((a, b) => a + b.score, 0) /
+                traineeScores.length,
+            );
+          }
         }
         voltooidParagrafen = gescoordeParagrafen.size;
       }
@@ -229,12 +247,15 @@ export default function Paragraaf() {
     if (bestaand && bestaand.length > 0) {
       await supabase
         .from("module_voortgang")
-        .update({ voortgang })
+        .update({ voortgang, gem_score: gemScore })
         .eq("id", bestaand[0].id);
     } else {
-      await supabase
-        .from("module_voortgang")
-        .insert({ trainee_email: email, module_id: moduleId, voortgang });
+      await supabase.from("module_voortgang").insert({
+        trainee_email: email,
+        module_id: moduleId,
+        voortgang,
+        gem_score: gemScore,
+      });
     }
   }
 

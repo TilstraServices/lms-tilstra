@@ -175,7 +175,26 @@ export default function DashboardLayout({
 
         {navigatie.map((item) =>
           actief === item.label ? (
-            <div key={item.label}>{item.blok}</div>
+            <div
+              key={item.label}
+              style={
+                item.volledigBreed
+                  ? {
+                      position: "fixed",
+                      top: "72px",
+                      left: ingeklapt ? "76px" : "240px",
+                      right: 0,
+                      bottom: 0,
+                      zIndex: 5,
+                      overflowY: "auto",
+                      background: "var(--grijs-100)",
+                      transition: "left 0.25s ease",
+                    }
+                  : {}
+              }
+            >
+              {item.blok}
+            </div>
           ) : null,
         )}
 

@@ -157,9 +157,25 @@ body {
   color: rgba(255, 255, 255, 0.6);
   margin-top: 2px;
 }
+
 .sidebar.ingeklapt .sidebar-logo-tekst,
 .sidebar.ingeklapt .sidebar-logo-sub {
   display: none;
+}
+
+.sidebar.ingeklapt .sidebar-logo {
+  min-height: 79px;
+}
+
+.sidebar.ingeklapt .sidebar-footer {
+  min-height: 85px;
+}
+
+.sidebar.ingeklapt .sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding-top: 16px;
 }
 
 /* Toggle bolletje */
@@ -229,6 +245,7 @@ body {
 .nav-item {
   display: flex;
   align-items: center;
+  min-height: 36px;
   gap: 10px;
   padding: 8px 10px;
   border-radius: 8px;
