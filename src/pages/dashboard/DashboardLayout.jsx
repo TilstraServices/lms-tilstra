@@ -76,7 +76,12 @@ export default function DashboardLayout({
                 style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
               >
                 {naam
-                  ? naam.substring(0, 2).toUpperCase()
+                  ? naam
+                      .split(" ")
+                      .map((w) => w[0])
+                      .slice(0, 2)
+                      .join("")
+                      .toUpperCase()
                   : email
                     ? email.substring(0, 2).toUpperCase()
                     : "??"}
@@ -190,7 +195,7 @@ export default function DashboardLayout({
                       background: "var(--grijs-100)",
                       transition: "left 0.25s ease",
                     }
-                  : {}
+                  : { width: "100%" }
               }
             >
               {item.blok}

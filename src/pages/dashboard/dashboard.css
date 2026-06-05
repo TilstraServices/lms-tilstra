@@ -113,10 +113,6 @@ body {
   flex-direction: row;
 }
 
-.layout.ingeklapt .hoofd {
-  margin-left: 56px;
-}
-
 /* ── Sidebar ── */
 .sidebar {
   position: fixed;
@@ -341,11 +337,11 @@ body {
   flex: 1;
   overflow-y: scroll;
   padding: 28px 32px 60px;
-  margin-left: 220px;
   transition: margin-left 0.25s ease;
   scrollbar-gutter: stable;
   min-width: 0;
-  width: calc(100vw - 220px);
+  padding-left: calc(20px + 32px);
+  padding-right: calc(20px + 32px);
 }
 
 /* ── Topbar ── */
@@ -354,6 +350,7 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 28px;
+  width: 100%;
 }
 .topbar-titel {
   font-size: 1.3rem;
