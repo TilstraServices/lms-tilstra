@@ -337,11 +337,10 @@ body {
   flex: 1;
   overflow-y: scroll;
   padding: 28px 32px 60px;
-  transition: margin-left 0.25s ease;
+  transition: padding-left 0.25s ease;
   scrollbar-gutter: stable;
   min-width: 0;
   padding-left: calc(20px + 32px);
-  padding-right: calc(20px + 32px);
 }
 
 /* ── Topbar ── */
