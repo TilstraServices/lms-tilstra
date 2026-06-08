@@ -898,6 +898,7 @@ export default function TraineeOverzichtBlok({ email }) {
                       style={{
                         borderLeft: `4px solid ${CATEGORIE_KLEUREN[m?.categorie] || "transparent"}`,
                         cursor: "pointer",
+                        opacity: isAfgerond ? 0.45 : 1,
                       }}
                     >
                       <td style={{ paddingLeft: "24px" }}>
