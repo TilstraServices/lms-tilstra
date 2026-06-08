@@ -58,6 +58,7 @@ export default function HomeBlok({ email, naam }) {
   const [heeftVandaagBevestigd, setHeeftVandaagBevestigd] = useState(false);
   const [laden, setLaden] = useState(true);
   const [opgeslagen, setOpgeslagen] = useState(false);
+  const [hoverBevestig, setHoverBevestig] = useState(false);
 
   useEffect(() => {
     if (email) laadData();
@@ -365,22 +366,36 @@ export default function HomeBlok({ email, naam }) {
                       <button
                         onClick={bevestig}
                         disabled={heeftVandaagBevestigd}
+                        onMouseEnter={() =>
+                          !heeftVandaagBevestigd && setHoverBevestig(true)
+                        }
+                        onMouseLeave={() => setHoverBevestig(false)}
                         style={{
                           width: "32px",
                           height: "32px",
                           background: heeftVandaagBevestigd
-                            ? "var(--grijs-200)"
-                            : "white",
-                          border: `1px solid ${heeftVandaagBevestigd ? "var(--grijs-300)" : "var(--groen)"}`,
+                            ? "#FFEBEE"
+                            : hoverBevestig
+                              ? "#FFEBEE"
+                              : "white",
+                          border: `1px solid ${heeftVandaagBevestigd ? "#C62828" : hoverBevestig ? "#C62828" : "var(--groen)"}`,
                           borderRadius: "6px",
                           cursor: heeftVandaagBevestigd ? "default" : "pointer",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontSize: "1rem",
+                          transition: "background 0.15s, border 0.15s",
                         }}
                       >
-                        👍
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 256 256"
+                          fill="#C62828"
+                        >
+                          <path d="M183.89,153.34a57.6,57.6,0,0,1-46.56,46.55A8.75,8.75,0,0,1,136,200a8,8,0,0,1-1.32-15.89c16.57-2.79,30.63-16.85,33.44-33.45a8,8,0,0,1,15.78,2.68ZM216,144a88,88,0,0,1-176,0c0-27.92,11-56.47,32.66-84.85a8,8,0,0,1,11.93-.89l24.12,23.41,22-60.41a8,8,0,0,1,12.63-3.41C165.21,36,216,84.55,216,144Zm-16,0c0-46.09-35.79-85.92-58.21-106.33L119.52,98.74a8,8,0,0,1-13.09,3L80.06,76.16C64.09,99.21,56,122,56,144a72,72,0,0,0,144,0Z" />
+                        </svg>
                       </button>
                       <span
                         style={{
