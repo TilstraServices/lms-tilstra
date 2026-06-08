@@ -341,6 +341,7 @@ body {
   scrollbar-gutter: stable;
   min-width: 0;
   padding-left: calc(20px + 32px);
+  position: relative;
 }
 
 /* ── Topbar ── */

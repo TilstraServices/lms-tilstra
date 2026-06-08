@@ -611,6 +611,8 @@ function TraineeDetail({ trainee, onTerug }) {
   const [openMijnModule, setOpenMijnModule] = useState(null);
   const [openAlleModule, setOpenAlleModule] = useState(null);
   const [laden, setLaden] = useState(true);
+  const [koppeling, setKoppeling] = useState(null);
+  const [padLabel, setPadLabel] = useState(null);
 
   useEffect(() => {
     async function laadData() {
@@ -622,6 +624,30 @@ function TraineeDetail({ trainee, onTerug }) {
         .eq("trainee_email", trainee.email)
         .eq("actief", true)
         .order("volgorde");
+      const { data: koppelingData } = await supabase
+        .from("koppeling")
+        .select("gedetacheerd, gedetacheerd_sinds, gedetacheerd_tot")
+        .eq("trainee_email", trainee.email)
+        .single();
+      setKoppeling(koppelingData);
+
+      const padLabels = {
+        payroll: "Payroll",
+        finance: "Finance",
+        hr: "HR",
+        stam: "Algemeen",
+      };
+      const eersteModule = learningPath?.[0];
+      if (eersteModule) {
+        const { data: lpData } = await supabase
+          .from("learning_path")
+          .select("pad")
+          .eq("trainee_email", trainee.email)
+          .eq("actief", true)
+          .limit(1)
+          .single();
+        setPadLabel(padLabels[lpData?.pad] || lpData?.pad || "—");
+      }
       const activeModuleIds = learningPath
         ? learningPath.map((lp) => lp.module_id)
         : [];
@@ -804,65 +830,315 @@ function TraineeDetail({ trainee, onTerug }) {
       {/* Header met terugknop */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
+          position: "sticky",
+          top: -28,
+          zIndex: 10,
           marginBottom: "24px",
+          marginLeft: "-70px",
+          marginRight: "-60px",
         }}
       >
-        <button
-          onClick={onTerug}
+        <div
           style={{
+            background: "white",
+            border: "1px solid var(--grijs-200)",
+            borderRadius: "10px 10px 0 0",
+            borderBottom: "3px solid var(--groen)",
+            boxShadow: "var(--schaduw)",
+            padding: "60px 72px 72px",
             display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "var(--grijs-100)",
-            border: "none",
-            borderRadius: "50px",
-            padding: "7px 14px",
-            cursor: "pointer",
-            fontSize: "0.82rem",
-            fontWeight: 600,
-            color: "var(--grijs-700)",
+            flexDirection: "column",
+            gap: "44px",
           }}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            fill="currentColor"
-            viewBox="0 0 256 256"
-          >
-            <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z" />
-          </svg>
-          Terug
-        </button>
-        <div>
-          <p
+          {/* Terugknop */}
+          <button
+            onClick={onTerug}
             style={{
-              fontSize: "1.1rem",
-              fontWeight: 700,
-              color: "var(--grijs-900)",
-            }}
-          >
-            {trainee.naam}
-          </p>
-          <p
-            style={{
-              fontSize: "0.82rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "0.78rem",
+              fontWeight: 600,
               color: "var(--grijs-500)",
-              marginTop: "2px",
+              padding: 0,
+              width: "fit-content",
+              marginLeft: "-48px",
+              marginTop: "-36px",
             }}
           >
-            {trainee.email}
-          </p>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              fill="currentColor"
+              viewBox="0 0 256 256"
+            >
+              <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z" />
+            </svg>
+            Terug naar overzicht
+          </button>
+
+          {/* Trainee info rij */}
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            {/* Avatar */}
+            <div
+              style={{
+                width: "110px",
+                height: "110px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #2E7D32, #66BB6A)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "2.4rem",
+                fontWeight: 800,
+                color: "white",
+                flexShrink: 0,
+              }}
+            >
+              {trainee.naam
+                .split(" ")
+                .map((w) => w[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase()}
+            </div>
+
+            {/* Naam + email */}
+            <div style={{ flex: 1 }}>
+              <p
+                style={{
+                  fontSize: "1.1rem",
+                  fontWeight: 700,
+                  color: "var(--grijs-900)",
+                }}
+              >
+                {trainee.naam}
+              </p>
+              <p
+                style={{
+                  fontSize: "0.82rem",
+                  color: "var(--grijs-500)",
+                  marginTop: "2px",
+                }}
+              >
+                {trainee.email}
+              </p>
+            </div>
+
+            {/* Learning path */}
+            <div style={{ textAlign: "center" }}>
+              <p
+                style={{
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "var(--grijs-500)",
+                  marginBottom: "4px",
+                }}
+              >
+                Learning path
+              </p>
+              <span
+                style={{
+                  background: "var(--groen-licht)",
+                  color: "var(--groen-donker)",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  padding: "3px 12px",
+                  borderRadius: "50px",
+                }}
+              >
+                {padLabel || "—"}
+              </span>
+            </div>
+
+            {/* Detachering toggle */}
+            <div style={{ textAlign: "center", minWidth: "160px" }}>
+              <p
+                style={{
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "var(--grijs-500)",
+                  marginBottom: "8px",
+                }}
+              >
+                Detachering
+              </p>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px",
+                }}
+              >
+                <span
+                  style={{ fontSize: "0.78rem", color: "var(--grijs-500)" }}
+                >
+                  Intern
+                </span>
+                <div
+                  onClick={async () => {
+                    const nieuw = !koppeling?.gedetacheerd;
+                    await supabase
+                      .from("koppeling")
+                      .update({
+                        gedetacheerd: nieuw,
+                        gedetacheerd_sinds: nieuw
+                          ? new Date().toISOString().split("T")[0]
+                          : null,
+                        gedetacheerd_tot: nieuw
+                          ? koppeling?.gedetacheerd_tot
+                          : null,
+                      })
+                      .eq("trainee_email", trainee.email);
+                    setKoppeling((prev) => ({
+                      ...prev,
+                      gedetacheerd: nieuw,
+                      gedetacheerd_sinds: nieuw
+                        ? new Date().toISOString().split("T")[0]
+                        : null,
+                    }));
+                  }}
+                  style={{
+                    width: "44px",
+                    height: "24px",
+                    borderRadius: "50px",
+                    background: koppeling?.gedetacheerd
+                      ? "#E65100"
+                      : "var(--grijs-300)",
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "background 0.2s",
+                    flexShrink: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "3px",
+                      left: koppeling?.gedetacheerd ? "23px" : "3px",
+                      width: "18px",
+                      height: "18px",
+                      borderRadius: "50%",
+                      background: "white",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+                      transition: "left 0.2s",
+                    }}
+                  />
+                </div>
+                <span
+                  style={{
+                    fontSize: "0.78rem",
+                    color: koppeling?.gedetacheerd
+                      ? "#E65100"
+                      : "var(--grijs-500)",
+                    fontWeight: koppeling?.gedetacheerd ? 700 : 400,
+                  }}
+                >
+                  Gedetacheerd
+                </span>
+              </div>
+              {koppeling?.gedetacheerd && (
+                <div
+                  style={{
+                    marginTop: "10px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "0.68rem",
+                        color: "var(--grijs-500)",
+                        minWidth: "40px",
+                        textAlign: "right",
+                      }}
+                    >
+                      Sinds
+                    </p>
+                    <input
+                      type="date"
+                      value={koppeling?.gedetacheerd_sinds || ""}
+                      onChange={async (e) => {
+                        await supabase
+                          .from("koppeling")
+                          .update({ gedetacheerd_sinds: e.target.value })
+                          .eq("trainee_email", trainee.email);
+                        setKoppeling((prev) => ({
+                          ...prev,
+                          gedetacheerd_sinds: e.target.value,
+                        }));
+                      }}
+                      style={{
+                        fontSize: "0.78rem",
+                        border: "1px solid var(--grijs-200)",
+                        borderRadius: "6px",
+                        padding: "3px 8px",
+                        color: "var(--grijs-700)",
+                      }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "0.68rem",
+                        color: "var(--grijs-500)",
+                        minWidth: "40px",
+                        textAlign: "right",
+                      }}
+                    >
+                      Tot
+                    </p>
+                    <input
+                      type="date"
+                      value={koppeling?.gedetacheerd_tot || ""}
+                      onChange={async (e) => {
+                        await supabase
+                          .from("koppeling")
+                          .update({ gedetacheerd_tot: e.target.value })
+                          .eq("trainee_email", trainee.email);
+                        setKoppeling((prev) => ({
+                          ...prev,
+                          gedetacheerd_tot: e.target.value,
+                        }));
+                      }}
+                      style={{
+                        fontSize: "0.78rem",
+                        border: "1px solid var(--grijs-200)",
+                        borderRadius: "6px",
+                        padding: "3px 8px",
+                        color: "var(--grijs-700)",
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        {trainee.gedetacheerd && (
-          <span className="badge badge-oranje" style={{ marginLeft: "8px" }}>
-            <span className="dot dot-oranje" />
-            Gedetacheerd
-          </span>
-        )}
       </div>
 
       <div
