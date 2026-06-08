@@ -476,7 +476,7 @@ body {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--grijs-500);
+  color: var(--groen-donker);
   padding: 10px 14px;
   border-bottom: 2px solid var(--grijs-200);
 }
