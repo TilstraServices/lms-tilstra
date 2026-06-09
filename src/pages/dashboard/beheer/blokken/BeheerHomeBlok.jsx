@@ -789,7 +789,7 @@ export default function BeheerHomeBlok({ email }) {
                 marginTop: "2px",
               }}
             >
-              Opens in een nieuw tabblad
+              Dashboard in een nieuw tabblad
             </p>
           </div>
         </div>

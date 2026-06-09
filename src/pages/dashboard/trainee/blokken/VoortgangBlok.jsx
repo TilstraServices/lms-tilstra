@@ -93,15 +93,20 @@ function HoofdstukRij({ hoofdstuk, email, cat }) {
       if (opgaveData && opgaveData.length > 0) {
         const { data: scoreData } = await supabase
           .from("scores")
-          .select("opgave_id, score")
+          .select("opgave_id, score, poging_nummer")
           .eq("trainee_email", email)
           .in(
             "opgave_id",
             opgaveData.map((o) => o.id),
-          );
+          )
+          .order("poging_nummer", { ascending: false });
 
+        const laasteScoresMap = {};
+        (scoreData || []).forEach((s) => {
+          if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+        });
         setScores(
-          (scoreData || []).map((s) => ({
+          Object.values(laasteScoresMap).map((s) => ({
             ...s,
             opgave: opgaveData.find((o) => o.id === s.opgave_id),
           })),
@@ -704,15 +709,25 @@ export default function VoortgangBlok({ email }) {
         if (!opg || opg.length === 0) continue;
         const { data: sc } = await supabase
           .from("scores")
-          .select("score")
+          .select("opgave_id, score, poging_nummer")
           .eq("trainee_email", email)
           .in(
             "opgave_id",
             opg.map((o) => o.id),
-          );
+          )
+          .order("poging_nummer", { ascending: false });
+
+        const laasteScoresMap = {};
+        (sc || []).forEach((s) => {
+          if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+        });
+        const traineeScores = Object.values(laasteScoresMap);
         sMap[moduleId] =
-          sc && sc.length > 0
-            ? Math.round(sc.reduce((a, b) => a + b.score, 0) / sc.length)
+          traineeScores.length > 0
+            ? Math.round(
+                traineeScores.reduce((a, b) => a + b.score, 0) /
+                  traineeScores.length,
+              )
             : null;
       }
       setScoreMap(sMap);

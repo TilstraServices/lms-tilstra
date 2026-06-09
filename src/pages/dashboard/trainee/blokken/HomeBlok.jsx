@@ -145,12 +145,21 @@ export default function HomeBlok({ email, naam }) {
             const opgaveIds = opgaves.map((o) => o.id);
             const { data: scores } = await supabase
               .from("scores")
-              .select("score")
+              .select("opgave_id, score, poging_nummer")
               .eq("trainee_email", email)
-              .in("opgave_id", opgaveIds);
+              .in("opgave_id", opgaveIds)
+              .order("poging_nummer", { ascending: false });
+
             if (scores && scores.length > 0) {
+              const laasteScoresMap = {};
+              scores.forEach((s) => {
+                if (!laasteScoresMap[s.opgave_id])
+                  laasteScoresMap[s.opgave_id] = s;
+              });
+              const traineeScores = Object.values(laasteScoresMap);
               const gem = Math.round(
-                scores.reduce((a, b) => a + b.score, 0) / scores.length,
+                traineeScores.reduce((a, b) => a + b.score, 0) /
+                  traineeScores.length,
               );
               setModuleScore(gem);
             }
