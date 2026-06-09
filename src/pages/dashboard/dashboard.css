@@ -337,11 +337,19 @@ body {
   flex: 1;
   overflow-y: scroll;
   padding: 28px 32px 60px;
-  transition: padding-left 0.25s ease;
   scrollbar-gutter: stable;
   min-width: 0;
-  padding-left: calc(20px + 32px);
+  margin-left: 220px;
+  width: calc(100vw - 220px);
+  transition:
+    margin-left 0.25s ease,
+    width 0.25s ease;
   position: relative;
+}
+
+.layout.ingeklapt .hoofd {
+  margin-left: 56px;
+  width: calc(100vw - 56px);
 }
 
 /* ── Topbar ── */

@@ -195,7 +195,7 @@ export default function DashboardLayout({
                       background: "var(--grijs-100)",
                       transition: "left 0.25s ease",
                     }
-                  : { width: "100%" }
+                  : { width: "100%", maxWidth: "1000px", margin: "0 auto" }
               }
             >
               {item.blok}
