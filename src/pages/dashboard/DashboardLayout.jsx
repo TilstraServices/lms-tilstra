@@ -7,9 +7,11 @@ export default function DashboardLayout({
   naam,
   email,
   rol,
+  instellingenBlok,
 }) {
   const [ingeklapt, setIngeklapt] = useState(false);
   const [actief, setActief] = useState(navigatie[0]?.label);
+  const [toonInstellingen, setToonInstellingen] = useState(false);
 
   useEffect(() => {
     if (rol === "Beheerder") {
@@ -58,7 +60,10 @@ export default function DashboardLayout({
                     <button
                       key={item.label}
                       className={`nav-item ${actief === item.label ? "actief" : ""}`}
-                      onClick={() => setActief(item.label)}
+                      onClick={() => {
+                        setActief(item.label);
+                        setToonInstellingen(false);
+                      }}
                     >
                       <span className="nav-icon">{item.icoon}</span>
                       <span className="nav-tekst">{item.label}</span>
@@ -70,7 +75,13 @@ export default function DashboardLayout({
           </nav>
 
           <div className="sidebar-footer">
-            <div className="sidebar-gebruiker">
+            <div
+              className="sidebar-gebruiker"
+              onClick={() =>
+                instellingenBlok && setToonInstellingen(!toonInstellingen)
+              }
+              style={{ cursor: instellingenBlok ? "pointer" : "default" }}
+            >
               <div
                 className="avatar"
                 style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
@@ -178,29 +189,35 @@ export default function DashboardLayout({
           </button>
         </div>
 
-        {navigatie.map((item) =>
-          actief === item.label ? (
-            <div
-              key={item.label}
-              style={
-                item.volledigBreed
-                  ? {
-                      position: "fixed",
-                      top: "72px",
-                      left: ingeklapt ? "76px" : "240px",
-                      right: 0,
-                      bottom: 0,
-                      zIndex: 5,
-                      overflowY: "auto",
-                      background: "var(--grijs-100)",
-                      transition: "left 0.25s ease",
-                    }
-                  : { width: "100%", maxWidth: "1000px", margin: "0 auto" }
-              }
-            >
-              {item.blok}
-            </div>
-          ) : null,
+        {toonInstellingen && instellingenBlok ? (
+          <div style={{ width: "100%", maxWidth: "1000px", margin: "0 auto" }}>
+            {instellingenBlok}
+          </div>
+        ) : (
+          navigatie.map((item) =>
+            actief === item.label ? (
+              <div
+                key={item.label}
+                style={
+                  item.volledigBreed
+                    ? {
+                        position: "fixed",
+                        top: "72px",
+                        left: ingeklapt ? "76px" : "240px",
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 5,
+                        overflowY: "auto",
+                        background: "var(--grijs-100)",
+                        transition: "left 0.25s ease",
+                      }
+                    : { width: "100%", maxWidth: "1000px", margin: "0 auto" }
+                }
+              >
+                {item.blok}
+              </div>
+            ) : null,
+          )
         )}
 
         {kinderen}
