@@ -64,7 +64,7 @@
 :root {
   --groen: #2e7d32;
   --groen-licht: #e8f5e9;
-  --groen-mid: #4caf50;
+
   --groen-donker: #1b5e20;
   --grijs-50: #fafafa;
   --grijs-100: #f5f5f5;
@@ -192,9 +192,7 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 50;
 }
-.sidebar-toggle:hover {
-  background: var(--groen-donker);
-}
+
 .sidebar-toggle:hover {
   background: var(--groen-donker);
 }
@@ -444,6 +442,10 @@ body {
   background: var(--grijs-200);
   color: var(--grijs-700);
 }
+.badge-blauw {
+  background: var(--blauw-licht);
+  color: var(--blauw);
+}
 .dot {
   width: 7px;
   height: 7px;
@@ -458,6 +460,9 @@ body {
 }
 .dot-grijs {
   background: var(--grijs-500);
+}
+.dot-rood {
+  background: var(--rood);
 }
 
 /* ── Voortgangsbalk ── */
