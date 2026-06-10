@@ -79,19 +79,21 @@ export default function HomeBlok({ email, naam }) {
 
     if (evalData) {
       setEvaluatie(evalData);
-      const { count } = await supabase
-        .from("evaluatie_bevestiging")
-        .select("*", { count: "exact", head: true })
-        .eq("evaluatie_id", evalData.id);
-      setAantalBevestigingen(count || 0);
       const vandaag = new Date().toISOString().split("T")[0];
-      const { data: vandaagData } = await supabase
-        .from("evaluatie_bevestiging")
-        .select("id")
-        .eq("evaluatie_id", evalData.id)
-        .eq("trainee_email", email)
-        .gte("aangemaakt_op", vandaag + "T00:00:00")
-        .limit(1);
+      const [{ count }, { data: vandaagData }] = await Promise.all([
+        supabase
+          .from("evaluatie_bevestiging")
+          .select("*", { count: "exact", head: true })
+          .eq("evaluatie_id", evalData.id),
+        supabase
+          .from("evaluatie_bevestiging")
+          .select("id")
+          .eq("evaluatie_id", evalData.id)
+          .eq("trainee_email", email)
+          .gte("aangemaakt_op", vandaag + "T00:00:00")
+          .limit(1),
+      ]);
+      setAantalBevestigingen(count || 0);
       setHeeftVandaagBevestigd(vandaagData && vandaagData.length > 0);
     }
 
@@ -124,46 +126,27 @@ export default function HomeBlok({ email, naam }) {
 
       // Gem. score voor deze module
       const moduleId = voortgangData[0].module_id;
-      const { data: hoofdstukken } = await supabase
-        .from("hoofdstukken")
-        .select("id")
-        .eq("module_id", moduleId);
+      const { data: scoreData } = await supabase
+        .from("scores")
+        .select(
+          "opgave_id, score, poging_nummer, opgaves(paragraaf_id, paragrafen(hoofdstuk_id, hoofdstukken(module_id)))",
+        )
+        .eq("trainee_email", email)
+        .order("poging_nummer", { ascending: false });
 
-      if (hoofdstukken && hoofdstukken.length > 0) {
-        const hoofdstukIds = hoofdstukken.map((h) => h.id);
-        const { data: paragrafen } = await supabase
-          .from("paragrafen")
-          .select("id")
-          .in("hoofdstuk_id", hoofdstukIds);
-        if (paragrafen && paragrafen.length > 0) {
-          const paragraafIds = paragrafen.map((p) => p.id);
-          const { data: opgaves } = await supabase
-            .from("opgaves")
-            .select("id")
-            .in("paragraaf_id", paragraafIds);
-          if (opgaves && opgaves.length > 0) {
-            const opgaveIds = opgaves.map((o) => o.id);
-            const { data: scores } = await supabase
-              .from("scores")
-              .select("opgave_id, score, poging_nummer")
-              .eq("trainee_email", email)
-              .in("opgave_id", opgaveIds)
-              .order("poging_nummer", { ascending: false });
-
-            if (scores && scores.length > 0) {
-              const laasteScoresMap = {};
-              scores.forEach((s) => {
-                if (!laasteScoresMap[s.opgave_id])
-                  laasteScoresMap[s.opgave_id] = s;
-              });
-              const traineeScores = Object.values(laasteScoresMap);
-              const gem = Math.round(
-                traineeScores.reduce((a, b) => a + b.score, 0) /
-                  traineeScores.length,
-              );
-              setModuleScore(gem);
-            }
-          }
+      if (scoreData && scoreData.length > 0) {
+        const laasteScoresMap = {};
+        scoreData.forEach((s) => {
+          if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+        });
+        const moduleScores = Object.values(laasteScoresMap).filter(
+          (s) => s.opgaves?.paragrafen?.hoofdstukken?.module_id === moduleId,
+        );
+        if (moduleScores.length > 0) {
+          const gem = Math.round(
+            moduleScores.reduce((a, b) => a + b.score, 0) / moduleScores.length,
+          );
+          setModuleScore(gem);
         }
       }
     }

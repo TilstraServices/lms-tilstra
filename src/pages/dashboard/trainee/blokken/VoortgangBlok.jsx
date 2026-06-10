@@ -684,52 +684,34 @@ export default function VoortgangBlok({ email }) {
         });
       setVoortgangMap(vMap);
 
-      const sMap = {};
-      for (const moduleId of activeModuleIds) {
-        const { data: hst } = await supabase
-          .from("hoofdstukken")
-          .select("id")
-          .eq("module_id", moduleId);
-        if (!hst || hst.length === 0) continue;
-        const { data: par } = await supabase
-          .from("paragrafen")
-          .select("id")
-          .in(
-            "hoofdstuk_id",
-            hst.map((h) => h.id),
-          );
-        if (!par || par.length === 0) continue;
-        const { data: opg } = await supabase
-          .from("opgaves")
-          .select("id")
-          .in(
-            "paragraaf_id",
-            par.map((p) => p.id),
-          );
-        if (!opg || opg.length === 0) continue;
-        const { data: sc } = await supabase
-          .from("scores")
-          .select("opgave_id, score, poging_nummer")
-          .eq("trainee_email", email)
-          .in(
-            "opgave_id",
-            opg.map((o) => o.id),
-          )
-          .order("poging_nummer", { ascending: false });
+      const { data: scoreData } = await supabase
+        .from("scores")
+        .select(
+          "opgave_id, score, poging_nummer, opgaves(paragraaf_id, paragrafen(hoofdstuk_id, hoofdstukken(module_id)))",
+        )
+        .eq("trainee_email", email)
+        .order("poging_nummer", { ascending: false });
 
-        const laasteScoresMap = {};
-        (sc || []).forEach((s) => {
-          if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
-        });
-        const traineeScores = Object.values(laasteScoresMap);
-        sMap[moduleId] =
-          traineeScores.length > 0
-            ? Math.round(
-                traineeScores.reduce((a, b) => a + b.score, 0) /
-                  traineeScores.length,
-              )
-            : null;
-      }
+      const laasteScoresMap = {};
+      (scoreData || []).forEach((s) => {
+        if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+      });
+
+      const sMap = {};
+      Object.values(laasteScoresMap).forEach((s) => {
+        const moduleId = s.opgaves?.paragrafen?.hoofdstukken?.module_id;
+        if (!moduleId || !activeModuleIds.includes(moduleId)) return;
+        if (!sMap[moduleId]) sMap[moduleId] = [];
+        sMap[moduleId].push(s.score);
+      });
+
+      Object.keys(sMap).forEach((moduleId) => {
+        const scores = sMap[moduleId];
+        sMap[moduleId] = Math.round(
+          scores.reduce((a, b) => a + b, 0) / scores.length,
+        );
+      });
+
       setScoreMap(sMap);
     }
 

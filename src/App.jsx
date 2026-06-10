@@ -6,7 +6,7 @@ import TraineeDashboard from "./pages/dashboard/trainee/Dashboard";
 import LeidinggevendeDashboard from "./pages/dashboard/leidinggevende/Dashboard";
 import BeheerDashboard from "./pages/dashboard/beheer/Dashboard";
 import "./index.css";
-import Paragraaf from "./pages/paragraaf/Paragraaf";
+import OpgaveContainer from "./pages/paragraaf/Opgave_container";
 import QuizContainer from "./pages/paragraaf/Quiz_container";
 
 function App() {
@@ -25,7 +25,7 @@ function App() {
           element={<LeidinggevendeDashboard />}
         />
         <Route path="/dashboard/beheer" element={<BeheerDashboard />} />
-        <Route path="/paragraaf" element={<Paragraaf />} />
+        <Route path="/paragraaf" element={<OpgaveContainer />} />
         <Route path="/quiz" element={<QuizContainer />} />
       </Routes>
     </BrowserRouter>

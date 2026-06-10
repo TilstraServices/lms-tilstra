@@ -394,20 +394,13 @@ export default function QuizContainer() {
     // Haal module_id op via quiz → hoofdstuk
     const { data: quizData } = await supabase
       .from("quizen")
-      .select("hoofdstuk_id")
+      .select("hoofdstuk_id, hoofdstukken(module_id)")
       .eq("id", quizId)
       .single();
 
     if (!quizData) return;
-
-    const { data: hoofdstuk } = await supabase
-      .from("hoofdstukken")
-      .select("module_id")
-      .eq("id", quizData.hoofdstuk_id)
-      .single();
-
-    if (!hoofdstuk) return;
-    const moduleId = hoofdstuk.module_id;
+    const moduleId = quizData.hoofdstukken?.module_id;
+    if (!moduleId) return;
 
     // Haal alle hoofdstukken van de module op
     const { data: hoofdstukken } = await supabase
@@ -419,16 +412,15 @@ export default function QuizContainer() {
     const hoofdstukIds = hoofdstukken.map((h) => h.id);
 
     // Paragrafen
-    const { data: alleParagrafen } = await supabase
-      .from("paragrafen")
-      .select("id")
-      .in("hoofdstuk_id", hoofdstukIds);
-
-    // Quizzen
-    const { data: alleQuizzen } = await supabase
-      .from("quizen")
-      .select("id")
-      .in("hoofdstuk_id", hoofdstukIds);
+    const [{ data: alleParagrafen }, { data: alleQuizzen }] = await Promise.all(
+      [
+        supabase
+          .from("paragrafen")
+          .select("id")
+          .in("hoofdstuk_id", hoofdstukIds),
+        supabase.from("quizen").select("id").in("hoofdstuk_id", hoofdstukIds),
+      ],
+    );
 
     const totaal = (alleParagrafen?.length || 0) + (alleQuizzen?.length || 0);
     if (totaal === 0) return;
@@ -443,37 +435,30 @@ export default function QuizContainer() {
         .select("id, paragraaf_id")
         .in("paragraaf_id", paragraafIds);
 
-      if (alleOpgaves && alleOpgaves.length > 0) {
-        const opgaveIds = alleOpgaves.map((o) => o.id);
-        const { data: alleTraineeScores } = await supabase
-          .from("scores")
-          .select("opgave_id, score, poging_nummer")
-          .eq("trainee_email", email)
-          .in("opgave_id", opgaveIds)
-          .order("poging_nummer", { ascending: false });
+      const { data: alleTraineeScores } = await supabase
+        .from("scores")
+        .select("opgave_id, score, poging_nummer, opgaves(paragraaf_id)")
+        .eq("trainee_email", email)
+        .in("opgave_id", alleOpgaves?.map((o) => o.id) || [])
+        .order("poging_nummer", { ascending: false });
 
-        // Houd alleen de laatste poging per opgave
-        const laasteScoresMap = {};
-        (alleTraineeScores || []).forEach((s) => {
-          if (!laasteScoresMap[s.opgave_id]) {
-            laasteScoresMap[s.opgave_id] = s;
-          }
-        });
-        const traineeScores = Object.values(laasteScoresMap);
-        const gescoordeParagrafen = new Set();
-        if (traineeScores) {
-          traineeScores.forEach((s) => {
-            const opgave = alleOpgaves.find((o) => o.id === s.opgave_id);
-            if (opgave) gescoordeParagrafen.add(opgave.paragraaf_id);
-          });
-          if (traineeScores.length > 0) {
-            gemScore = Math.round(
-              traineeScores.reduce((a, b) => a + b.score, 0) /
-                traineeScores.length,
-            );
-          }
-        }
-        voltooidParagrafen = gescoordeParagrafen.size;
+      const laasteScoresMap = {};
+      (alleTraineeScores || []).forEach((s) => {
+        if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+      });
+      const traineeScores = Object.values(laasteScoresMap);
+
+      const gescoordeParagrafen = new Set();
+      traineeScores.forEach((s) => {
+        if (s.opgaves?.paragraaf_id)
+          gescoordeParagrafen.add(s.opgaves.paragraaf_id);
+      });
+      voltooidParagrafen = gescoordeParagrafen.size;
+
+      if (traineeScores.length > 0) {
+        gemScore = Math.round(
+          traineeScores.reduce((a, b) => a + b.score, 0) / traineeScores.length,
+        );
       }
     }
 

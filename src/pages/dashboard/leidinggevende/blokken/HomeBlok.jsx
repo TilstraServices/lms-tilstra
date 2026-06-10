@@ -601,7 +601,7 @@ function ActiviteitModal({ trainee, onSluit }) {
   );
 }
 
-export default function TraineeOverzichtBlok({ email }) {
+export default function HomeBlok({ email }) {
   const navigate = useNavigate();
   const [trainees, setTrainees] = useState([]);
   const [totaalAfgerond, setTotaalAfgerond] = useState(0);
@@ -641,7 +641,7 @@ export default function TraineeOverzichtBlok({ email }) {
         supabase
           .from("module_voortgang")
           .select(
-            "trainee_email, module_id, voortgang, gem_score, bijgewerkt_op",
+            "trainee_email, module_id, voortgang, gem_score, bijgewerkt_op, modules(naam, categorie)",
           )
           .in("trainee_email", traineeEmails),
         supabase
@@ -658,17 +658,14 @@ export default function TraineeOverzichtBlok({ email }) {
         supabase.rpc("laatste_activiteit", { trainee_emails: traineeEmails }),
       ]);
 
-      const moduleIds = [
-        ...new Set((voortgangRes.data || []).map((v) => v.module_id)),
-      ];
-      const { data: modulesData } = await supabase
-        .from("modules")
-        .select("id, naam, categorie")
-        .in("id", moduleIds);
       const moduleMap = {};
-      (modulesData || []).forEach(
-        (m) => (moduleMap[m.id] = { naam: m.naam, categorie: m.categorie }),
-      );
+      (voortgangRes.data || []).forEach((v) => {
+        if (v.modules)
+          moduleMap[v.module_id] = {
+            naam: v.modules.naam,
+            categorie: v.modules.categorie,
+          };
+      });
 
       const voortgangPerTrainee = {};
       (voortgangRes.data || []).forEach((v) => {
