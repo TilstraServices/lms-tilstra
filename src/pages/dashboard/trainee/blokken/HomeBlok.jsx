@@ -356,6 +356,7 @@ export default function HomeBlok({ email, naam }) {
                       }}
                     >
                       <button
+                        aria-label="Bevestig tevredenheid"
                         onClick={bevestig}
                         disabled={heeftVandaagBevestigd}
                         onMouseEnter={() =>

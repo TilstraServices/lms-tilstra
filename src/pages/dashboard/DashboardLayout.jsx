@@ -126,6 +126,7 @@ export default function DashboardLayout({
         {/* Toggle knop — binnen aside, buiten sidebar-inhoud */}
         <button
           className="sidebar-toggle"
+          aria-label={ingeklapt ? "Sidebar uitklappen" : "Sidebar inklappen"}
           onClick={() => setIngeklapt(!ingeklapt)}
         >
           {ingeklapt ? (
