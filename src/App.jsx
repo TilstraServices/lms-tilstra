@@ -8,6 +8,7 @@ import BeheerDashboard from "./pages/dashboard/beheer/Dashboard";
 import "./index.css";
 import OpgaveContainer from "./pages/paragraaf/Opgave_container";
 import QuizContainer from "./pages/paragraaf/Quiz_container";
+import LPTestBlok from "./pages/dashboard/trainee/blokken/LPTestBlok";
 
 function App() {
   const params = new URLSearchParams(window.location.search);
@@ -27,6 +28,7 @@ function App() {
         <Route path="/dashboard/beheer" element={<BeheerDashboard />} />
         <Route path="/paragraaf" element={<OpgaveContainer />} />
         <Route path="/quiz" element={<QuizContainer />} />
+        <Route path="/lptest" element={<LPTestBlok />} />
       </Routes>
     </BrowserRouter>
   );

@@ -98,3 +98,11 @@ export function BoekenIcoon({ size = 18 }) {
     </svg>
   );
 }
+
+export function TestbuisIcoon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor">
+      <path d="M243.31,90.91l-74.22-74.22a16,16,0,0,0-22.63,0L36.69,126.44a16,16,0,0,0,0,22.63l24.74,24.74L36.69,198.53a16,16,0,0,0,0,22.63l18.15,18.14a16,16,0,0,0,22.62,0l24.74-24.74,24.74,24.74a16,16,0,0,0,22.63,0L243.31,113.54A16,16,0,0,0,243.31,90.91Z" />
+    </svg>
+  );
+}

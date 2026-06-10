@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../../lib/supabase";
+import { TestbuisIcoon } from "../../../../assets/icons";
 
 // ── Pad configuratie ──
 const PAD_CONFIG = {
@@ -540,7 +541,7 @@ function DetailPanel({
 
 const PAD_VOLGORDE = ["stam", "payroll", "finance", "hr"];
 
-export default function LearningPathBlok({ email }) {
+export default function LearningPathBlok({ email, onTest }) {
   const [skillTree, setSkillTree] = useState({
     stam: [],
     payroll: [],
@@ -645,6 +646,27 @@ export default function LearningPathBlok({ email }) {
           Klik op een module voor meer informatie
         </p>
       </div>
+
+      <button
+        onClick={onTest}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          fontSize: "0.78rem",
+          fontWeight: 600,
+          padding: "6px 14px",
+          borderRadius: "50px",
+          border: "1px solid #EEEEEE",
+          background: "white",
+          cursor: "pointer",
+          color: "var(--grijs-700)",
+          fontFamily: "Inter, sans-serif",
+        }}
+      >
+        <TestbuisIcoon size={15} />
+        Bekijk nieuwe versie
+      </button>
 
       {/* Rijen */}
       <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>

@@ -8,6 +8,8 @@ export default function DashboardLayout({
   email,
   rol,
   instellingenBlok,
+  overrideBlok,
+  onNavigeer,
 }) {
   const [ingeklapt, setIngeklapt] = useState(false);
   const [actief, setActief] = useState(navigatie[0]?.label);
@@ -63,6 +65,7 @@ export default function DashboardLayout({
                       onClick={() => {
                         setActief(item.label);
                         setToonInstellingen(false);
+                        if (onNavigeer) onNavigeer();
                       }}
                     >
                       <span className="nav-icon">{item.icoon}</span>
@@ -190,7 +193,11 @@ export default function DashboardLayout({
           </button>
         </div>
 
-        {toonInstellingen && instellingenBlok ? (
+        {overrideBlok ? (
+          <div style={{ width: "100%", maxWidth: "1000px", margin: "0 auto" }}>
+            {overrideBlok}
+          </div>
+        ) : toonInstellingen && instellingenBlok ? (
           <div style={{ width: "100%", maxWidth: "1000px", margin: "0 auto" }}>
             {instellingenBlok}
           </div>
