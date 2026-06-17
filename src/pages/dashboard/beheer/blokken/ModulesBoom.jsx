@@ -322,6 +322,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
   const [opgaveType, setOpgaveType] = useState(
     geselecteerd?.sjabloon || geselecteerd?.type || "",
   );
+  const [toonLinkPopup, setToonLinkPopup] = useState(false);
 
   async function slaOp() {
     if (!naam.trim()) return;
@@ -770,6 +771,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               kindInfo={kindInfo}
             />
           )}
+
           <NieuwItemFormulier
             geselecteerd={geselecteerd}
             onHerlaad={() => {
@@ -781,6 +783,103 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               onHerlaad(tabelMap[geselecteerd.type] || geselecteerd.tabel);
             }}
           />
+          {geselecteerd.type === "paragraaf" && (
+            <div
+              style={{
+                marginTop: "16px",
+                position: "relative",
+                display: "inline-block",
+              }}
+            >
+              <button
+                onClick={() => setToonLinkPopup(!toonLinkPopup)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  padding: "7px 14px",
+                  borderRadius: "50px",
+                  border: "1px solid var(--grijs-200)",
+                  background: "white",
+                  cursor: "pointer",
+                  color: "var(--grijs-700)",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                  viewBox="0 0 256 256"
+                >
+                  <path d="M137.54,186.36a8,8,0,0,1,0,11.31l-9.94,10A56,56,0,0,1,48.38,128.4L72.5,104.28A56,56,0,0,1,149.31,102a8,8,0,1,1-10.64,11.96,40,40,0,0,0-54.85,1.32L59.7,139.4a40,40,0,1,0,56.58,56.58l9.94-9.94A8,8,0,0,1,137.54,186.36Zm70.08-138a56.08,56.08,0,0,0-79.22,0l-9.94,9.95a8,8,0,0,0,11.32,11.31l9.94-9.94a40,40,0,0,1,56.58,56.58L172.18,140.4A40,40,0,0,1,117.33,141.72a8,8,0,1,0-10.64,11.96,56,56,0,0,0,76.81-1.32l24.12-24.12A56.08,56.08,0,0,0,207.62,48.38Z" />
+                </svg>
+                Paragraaf link
+              </button>
+
+              {toonLinkPopup && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    left: 0,
+                    background: "white",
+                    border: "1px solid var(--grijs-200)",
+                    borderRadius: "10px",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                    padding: "14px",
+                    zIndex: 50,
+                    width: "360px",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      color: "var(--grijs-500)",
+                      marginBottom: "8px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Paragraaf link
+                  </p>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <input
+                      readOnly
+                      value={`https://tilstraservices.github.io/lms-tilstra/paragraaf?id=${geselecteerd.id}`}
+                      style={{
+                        flex: 1,
+                        padding: "7px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--grijs-200)",
+                        fontFamily: "Inter, sans-serif",
+                        fontSize: "0.78rem",
+                        color: "var(--grijs-700)",
+                        background: "var(--grijs-50)",
+                      }}
+                      onClick={(e) => e.target.select()}
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          `https://tilstraservices.github.io/lms-tilstra/paragraaf?id=${geselecteerd.id}`,
+                        );
+                        setToonLinkPopup(false);
+                      }}
+                      className="knop knop-primair"
+                      style={{ fontSize: "0.78rem", padding: "7px 12px" }}
+                    >
+                      Kopieer
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>
