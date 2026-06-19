@@ -29,6 +29,24 @@ function App() {
         <Route path="/paragraaf" element={<OpgaveContainer />} />
         <Route path="/quiz" element={<QuizContainer />} />
         <Route path="/lptest" element={<LPTestBlok />} />
+        <Route
+          path="/klant"
+          element={
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100vh",
+                fontFamily: "Inter, sans-serif",
+                color: "#9E9E9E",
+                fontSize: "0.85rem",
+              }}
+            >
+              Toegang via Huddle
+            </div>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

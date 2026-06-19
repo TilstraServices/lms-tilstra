@@ -29,6 +29,13 @@ export default function Start() {
       else if (gebruiker.rol === "leidinggevende")
         navigate("/dashboard/leidinggevende");
       else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
+      else if (gebruiker.rol === "klant") {
+        const redirect = new URLSearchParams(window.location.search).get(
+          "redirect",
+        );
+        if (redirect) window.location.href = redirect;
+        else navigate("/klant");
+      }
     }
 
     stuurDoor();
@@ -52,6 +59,13 @@ export default function Start() {
     else if (gebruiker.rol === "leidinggevende")
       navigate("/dashboard/leidinggevende");
     else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
+    else if (gebruiker.rol === "klant") {
+      const redirect = new URLSearchParams(window.location.search).get(
+        "redirect",
+      );
+      if (redirect) window.location.href = redirect;
+      else navigate("/klant");
+    }
   }
 
   if (laden) {

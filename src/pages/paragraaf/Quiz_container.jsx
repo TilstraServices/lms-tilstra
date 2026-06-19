@@ -302,6 +302,13 @@ export default function QuizContainer() {
   const email = localStorage.getItem("email");
 
   useEffect(() => {
+    if (!email) {
+      const huidigeUrl = window.location.href;
+      window.location.href = `/lms-tilstra/?redirect=${encodeURIComponent(huidigeUrl)}`;
+    }
+  }, [email]);
+
+  useEffect(() => {
     async function laadData() {
       if (!quizId) {
         setLaden(false);
