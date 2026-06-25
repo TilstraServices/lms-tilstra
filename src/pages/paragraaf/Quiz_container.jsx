@@ -368,8 +368,8 @@ export default function QuizContainer() {
 
     setScore(scorePercentage);
     setGecontroleerd(true);
+    setOpgeslagen(true);
 
-    // Sla score op
     if (email && scorePercentage !== null) {
       slaScoreOp(scorePercentage);
     }
@@ -399,7 +399,6 @@ export default function QuizContainer() {
 
     // Bereken voortgang
     await berekeningVoortgang();
-    setOpgeslagen(true);
   }
 
   async function berekeningVoortgang() {
@@ -410,16 +409,9 @@ export default function QuizContainer() {
       .eq("id", quizId)
       .single();
 
-    if (!quizData) {
-      console.log("quizData is null");
-      return;
-    }
+    if (!quizData) return;
     const moduleId = quizData.hoofdstukken?.module_id;
-    console.log("moduleId:", moduleId);
-    if (!moduleId) {
-      console.log("moduleId is null");
-      return;
-    }
+    if (!moduleId) return;
 
     // Haal alle hoofdstukken van de module op
     const { data: hoofdstukken } = await supabase
@@ -505,15 +497,6 @@ export default function QuizContainer() {
     const tabel = isKlant ? "klant_voortgang" : "module_voortgang";
     const emailVeld = isKlant ? "klant_email" : "trainee_email";
 
-    console.log(
-      "bestaand check voor tabel:",
-      tabel,
-      "email:",
-      email,
-      "moduleId:",
-      moduleId,
-    );
-
     const { data: bestaand } = await supabase
       .from(tabel)
       .select("id")
@@ -526,7 +509,7 @@ export default function QuizContainer() {
         .from(tabel)
         .update({ voortgang, gem_score: gemScore })
         .eq("id", bestaand[0].id);
-      console.log("update error:", updateError);
+      if (updateError) console.error("Voortgang update mislukt:", updateError);
     } else {
       const { error: insertError } = await supabase.from(tabel).insert({
         [emailVeld]: email,
@@ -534,21 +517,8 @@ export default function QuizContainer() {
         voortgang,
         gem_score: gemScore,
       });
-      console.log("insert error:", insertError);
+      if (insertError) console.error("Voortgang insert mislukt:", insertError);
     }
-
-    console.log("bestaand:", bestaand);
-
-    console.log(
-      "voortgang:",
-      voortgang,
-      "gemScore:",
-      gemScore,
-      "tabel:",
-      tabel,
-      "emailVeld:",
-      emailVeld,
-    );
   } // ← sluit berekeningVoortgang
 
   function reset() {
