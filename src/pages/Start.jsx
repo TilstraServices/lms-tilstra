@@ -24,6 +24,7 @@ export default function Start() {
       }
 
       localStorage.setItem("naam", gebruiker.naam);
+      localStorage.setItem("rol", gebruiker.rol);
 
       if (gebruiker.rol === "trainee") navigate("/dashboard/trainee");
       else if (gebruiker.rol === "leidinggevende")
@@ -54,6 +55,7 @@ export default function Start() {
 
     localStorage.setItem("email", ingevoerdEmail);
     localStorage.setItem("naam", gebruiker.naam);
+    localStorage.setItem("rol", gebruiker.rol);
 
     if (gebruiker.rol === "trainee") navigate("/dashboard/trainee");
     else if (gebruiker.rol === "leidinggevende")

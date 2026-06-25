@@ -300,6 +300,8 @@ export default function QuizContainer() {
   const params = new URLSearchParams(window.location.search);
   const quizId = params.get("id");
   const email = localStorage.getItem("email");
+  const rol = localStorage.getItem("rol");
+  const isKlant = rol === "klant";
 
   useEffect(() => {
     if (!email) {
@@ -374,10 +376,13 @@ export default function QuizContainer() {
   }
 
   async function slaScoreOp(scoreWaarde) {
+    const quizTabel = isKlant ? "klant_quiz_scores" : "quiz_scores";
+    const emailVeld = isKlant ? "klant_email" : "trainee_email";
+
     const { data: pogingen } = await supabase
-      .from("quiz_scores")
+      .from(quizTabel)
       .select("poging_nummer")
-      .eq("trainee_email", email)
+      .eq(emailVeld, email)
       .eq("quiz_id", quizId)
       .order("poging_nummer", { ascending: false })
       .limit(1);
@@ -385,8 +390,8 @@ export default function QuizContainer() {
     const volgendPoging =
       pogingen && pogingen.length > 0 ? pogingen[0].poging_nummer + 1 : 1;
 
-    await supabase.from("quiz_scores").insert({
-      trainee_email: email,
+    await supabase.from(quizTabel).insert({
+      [emailVeld]: email,
       quiz_id: quizId,
       score: scoreWaarde,
       poging_nummer: volgendPoging,
@@ -405,9 +410,16 @@ export default function QuizContainer() {
       .eq("id", quizId)
       .single();
 
-    if (!quizData) return;
+    if (!quizData) {
+      console.log("quizData is null");
+      return;
+    }
     const moduleId = quizData.hoofdstukken?.module_id;
-    if (!moduleId) return;
+    console.log("moduleId:", moduleId);
+    if (!moduleId) {
+      console.log("moduleId is null");
+      return;
+    }
 
     // Haal alle hoofdstukken van de module op
     const { data: hoofdstukken } = await supabase
@@ -443,9 +455,9 @@ export default function QuizContainer() {
         .in("paragraaf_id", paragraafIds);
 
       const { data: alleTraineeScores } = await supabase
-        .from("scores")
+        .from(isKlant ? "klant_scores" : "scores")
         .select("opgave_id, score, poging_nummer, opgaves(paragraaf_id)")
-        .eq("trainee_email", email)
+        .eq(isKlant ? "klant_email" : "trainee_email", email)
         .in("opgave_id", alleOpgaves?.map((o) => o.id) || [])
         .order("poging_nummer", { ascending: false });
 
@@ -474,9 +486,9 @@ export default function QuizContainer() {
     if (alleQuizzen && alleQuizzen.length > 0) {
       const quizIds = alleQuizzen.map((q) => q.id);
       const { data: quizScores } = await supabase
-        .from("quiz_scores")
+        .from(isKlant ? "klant_quiz_scores" : "quiz_scores")
         .select("quiz_id")
-        .eq("trainee_email", email)
+        .eq(isKlant ? "klant_email" : "trainee_email", email)
         .in("quiz_id", quizIds);
 
       if (quizScores) {
@@ -490,26 +502,53 @@ export default function QuizContainer() {
     );
 
     // Upsert module_voortgang
+    const tabel = isKlant ? "klant_voortgang" : "module_voortgang";
+    const emailVeld = isKlant ? "klant_email" : "trainee_email";
+
+    console.log(
+      "bestaand check voor tabel:",
+      tabel,
+      "email:",
+      email,
+      "moduleId:",
+      moduleId,
+    );
+
     const { data: bestaand } = await supabase
-      .from("module_voortgang")
+      .from(tabel)
       .select("id")
-      .eq("trainee_email", email)
+      .eq(emailVeld, email)
       .eq("module_id", moduleId)
       .limit(1);
 
     if (bestaand && bestaand.length > 0) {
-      await supabase
-        .from("module_voortgang")
+      const { error: updateError } = await supabase
+        .from(tabel)
         .update({ voortgang, gem_score: gemScore })
         .eq("id", bestaand[0].id);
+      console.log("update error:", updateError);
     } else {
-      await supabase.from("module_voortgang").insert({
-        trainee_email: email,
+      const { error: insertError } = await supabase.from(tabel).insert({
+        [emailVeld]: email,
         module_id: moduleId,
         voortgang,
         gem_score: gemScore,
       });
+      console.log("insert error:", insertError);
     }
+
+    console.log("bestaand:", bestaand);
+
+    console.log(
+      "voortgang:",
+      voortgang,
+      "gemScore:",
+      gemScore,
+      "tabel:",
+      tabel,
+      "emailVeld:",
+      emailVeld,
+    );
   } // ← sluit berekeningVoortgang
 
   function reset() {

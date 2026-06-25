@@ -67,6 +67,8 @@ export default function OpgaveContainer() {
   const params = new URLSearchParams(window.location.search);
   const paragraafId = params.get("id");
   const email = localStorage.getItem("email");
+  const rol = localStorage.getItem("rol");
+  const isKlant = rol === "klant";
 
   useEffect(() => {
     if (!email) {
@@ -236,21 +238,24 @@ export default function OpgaveContainer() {
       ((voltooidParagrafen + voltooidQuizzen) / totaal) * 100,
     );
 
+    const tabel = isKlant ? "klant_voortgang" : "module_voortgang";
+    const emailVeld = isKlant ? "klant_email" : "trainee_email";
+
     const { data: bestaand } = await supabase
-      .from("module_voortgang")
+      .from(tabel)
       .select("id")
-      .eq("trainee_email", email)
+      .eq(emailVeld, email)
       .eq("module_id", moduleId)
       .limit(1);
 
     if (bestaand && bestaand.length > 0) {
       await supabase
-        .from("module_voortgang")
+        .from(tabel)
         .update({ voortgang, gem_score: gemScore })
         .eq("id", bestaand[0].id);
     } else {
-      await supabase.from("module_voortgang").insert({
-        trainee_email: email,
+      await supabase.from(tabel).insert({
+        [emailVeld]: email,
         module_id: moduleId,
         voortgang,
         gem_score: gemScore,
@@ -271,9 +276,9 @@ export default function OpgaveContainer() {
     async function slaOp() {
       const opgaveIds = opgaves.map((o) => o.id);
       const { data: bestaandePogingen } = await supabase
-        .from("scores")
+        .from(isKlant ? "klant_scores" : "scores")
         .select("opgave_id, poging_nummer")
-        .eq("trainee_email", email)
+        .eq(isKlant ? "klant_email" : "trainee_email", email)
         .in("opgave_id", opgaveIds)
         .order("poging_nummer", { ascending: false });
 
@@ -285,14 +290,16 @@ export default function OpgaveContainer() {
       const nieuweScores = opgaves
         .filter((o) => scores[o.id] !== undefined)
         .map((o) => ({
-          trainee_email: email,
+          [isKlant ? "klant_email" : "trainee_email"]: email,
           opgave_id: o.id,
           score: scores[o.id],
           poging_nummer: (pogingMap[o.id] || 0) + 1,
         }));
 
       if (nieuweScores.length > 0) {
-        await supabase.from("scores").insert(nieuweScores);
+        await supabase
+          .from(isKlant ? "klant_scores" : "scores")
+          .insert(nieuweScores);
       }
 
       console.log("moduleId:", moduleId);
