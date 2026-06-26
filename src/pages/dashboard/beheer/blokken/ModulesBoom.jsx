@@ -741,10 +741,8 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
             className="knop knop-secundair"
             style={{
               fontSize: "0.82rem",
-              marginTop: "32px",
-              marginBottom: "16px",
               display: "block",
-              margin: "32px auto 0",
+              margin: "32px auto 16px",
             }}
             onClick={() => {
               const paragraaf = data.paragrafen.find(
