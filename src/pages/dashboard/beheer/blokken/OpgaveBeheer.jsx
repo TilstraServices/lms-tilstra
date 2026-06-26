@@ -553,12 +553,15 @@ export default function OpgaveBeheer({ opgave, onHerlaad }) {
       { tekst: "", correct: false },
     ],
   );
+  const [meerdereCorrect, setMeerdereCorrect] = useState(
+    inhoud.meerdereCorrect || false,
+  );
   const [opgeslagen, setOpgeslagen] = useState(false);
 
   async function slaOp() {
     await supabase
       .from("opgaves")
-      .update({ inhoud: { vraag, opties } })
+      .update({ inhoud: { vraag, opties, meerdereCorrect } })
       .eq("id", opgave.id);
     setOpgeslagen(true);
     onHerlaad();
@@ -572,7 +575,13 @@ export default function OpgaveBeheer({ opgave, onHerlaad }) {
   }
 
   function setCorrect(index) {
-    setOpties((prev) => prev.map((o, i) => ({ ...o, correct: i === index })));
+    if (meerdereCorrect) {
+      setOpties((prev) =>
+        prev.map((o, i) => (i === index ? { ...o, correct: !o.correct } : o)),
+      );
+    } else {
+      setOpties((prev) => prev.map((o, i) => ({ ...o, correct: i === index })));
+    }
     setOpgeslagen(false);
   }
 
@@ -590,12 +599,48 @@ export default function OpgaveBeheer({ opgave, onHerlaad }) {
           style={{ ...inputStijl, resize: "vertical", minHeight: "70px" }}
         />
 
-        <label style={{ ...labelStijl, marginBottom: "8px" }}>
-          Antwoorden{" "}
-          <span style={{ fontWeight: 400, color: "var(--grijs-500)" }}>
-            (klik op het rondje voor het juiste antwoord)
-          </span>
-        </label>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "8px",
+          }}
+        >
+          <label style={{ ...labelStijl, marginBottom: 0 }}>
+            Antwoorden{" "}
+            <span style={{ fontWeight: 400, color: "var(--grijs-500)" }}>
+              (klik op het {meerdereCorrect ? "vakje" : "rondje"} voor het
+              juiste antwoord)
+            </span>
+          </label>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "0.78rem",
+              color: "var(--grijs-700)",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={meerdereCorrect}
+              onChange={(e) => {
+                setMeerdereCorrect(e.target.checked);
+                if (!e.target.checked) {
+                  setOpties((prev) =>
+                    prev.map((o, i) => ({ ...o, correct: i === 0 })),
+                  );
+                }
+                setOpgeslagen(false);
+              }}
+            />
+            Meerdere correct
+          </label>
+        </div>
         <div
           style={{
             display: "flex",
@@ -614,7 +659,7 @@ export default function OpgaveBeheer({ opgave, onHerlaad }) {
                 style={{
                   width: "20px",
                   height: "20px",
-                  borderRadius: "50%",
+                  borderRadius: meerdereCorrect ? "4px" : "50%",
                   flexShrink: 0,
                   border: `2px solid ${optie.correct ? "var(--groen)" : "var(--grijs-300)"}`,
                   background: optie.correct ? "var(--groen)" : "white",
