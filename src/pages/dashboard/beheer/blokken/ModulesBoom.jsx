@@ -336,8 +336,23 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
       .from(geselecteerd.tabel)
       .update(updates)
       .eq("id", geselecteerd.id);
+    const { data: vers } = await supabase
+      .from(geselecteerd.tabel)
+      .select("*")
+      .eq("id", geselecteerd.id)
+      .single();
     setBewerkModus(false);
-    onHerlaad(geselecteerd.tabel, { ...geselecteerd, ...updates });
+    onHerlaad(
+      geselecteerd.tabel,
+      vers
+        ? {
+            ...vers,
+            type: geselecteerd.type,
+            tabel: geselecteerd.tabel,
+            sjabloon: geselecteerd.sjabloon,
+          }
+        : null,
+    );
   }
 
   async function verwijder() {
@@ -717,10 +732,37 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
       )}
 
       {geselecteerd.type === "opgave" && (
-        <OpgaveBeheer
-          opgave={geselecteerd}
-          onHerlaad={() => onHerlaad("opgaves")}
-        />
+        <>
+          <OpgaveBeheer
+            opgave={geselecteerd}
+            onHerlaad={() => onHerlaad("opgaves")}
+          />
+          <button
+            className="knop knop-secundair"
+            style={{
+              fontSize: "0.82rem",
+              marginTop: "32px",
+              marginBottom: "16px",
+              display: "block",
+              margin: "32px auto 0",
+            }}
+            onClick={() => {
+              const paragraaf = data.paragrafen.find(
+                (p) => p.id === geselecteerd.paragraaf_id,
+              );
+              if (paragraaf) {
+                onSelecteer({
+                  ...paragraaf,
+                  type: "paragraaf",
+                  tabel: "paragrafen",
+                  formulierOpen: true,
+                });
+              }
+            }}
+          >
+            + Nieuwe opgave in deze paragraaf
+          </button>
+        </>
       )}
 
       <hr
@@ -872,6 +914,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
 
           <NieuwItemFormulier
             geselecteerd={geselecteerd}
+            autoOpen={geselecteerd?.formulierOpen}
             onHerlaad={() => {
               const tabelMap = {
                 module: "hoofdstukken",
@@ -984,10 +1027,10 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
   );
 }
 
-function NieuwItemFormulier({ geselecteerd, onHerlaad }) {
+function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen }) {
   const [naam, setNaam] = useState("");
   const [type, setType] = useState("");
-  const [toonFormulier, setToonFormulier] = useState(false);
+  const [toonFormulier, setToonFormulier] = useState(!!autoOpen);
 
   const kindTypes = {
     module: { label: "hoofdstuk", tabel: "hoofdstukken", veld: "module_id" },
