@@ -1048,8 +1048,17 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen }) {
         { tekst: "", correct: false },
       ],
     },
-    invulvraag: { vraag: "", tekst: "", antwoorden: [""] },
-    "drag-drop": { vraag: "", tekst: "", antwoorden: [""], woordenbank: [""] },
+    invulvraag: {
+      vraag: "Vul de juiste woorden in",
+      tekst: "",
+      antwoorden: [""],
+    },
+    "drag-drop": {
+      vraag: "Vul de juiste woorden in",
+      tekst: "",
+      antwoorden: [""],
+      woordenbank: [""],
+    },
     "open-vraag": { vraag: "", modelantwoorden: [""] },
   };
 
