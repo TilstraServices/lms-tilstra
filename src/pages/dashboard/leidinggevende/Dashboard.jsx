@@ -6,6 +6,7 @@ import MatrixBlok from "./blokken/MatrixBlok";
 import HomeBlok from "./blokken/HomeBlok";
 import MijnTraineesBlok from "./blokken/MijnTraineesBlok";
 import InstellingenBlok from "./blokken/InstellingenBlok";
+import { HouseIcoon } from "../../../assets/icons.jsx";
 
 export default function LeidinggevendeDashboard() {
   const [email, setEmail] = useState(() => localStorage.getItem("email"));
@@ -39,17 +40,7 @@ export default function LeidinggevendeDashboard() {
   const navigatie = [
     {
       label: "Home",
-      icoon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H53.39a8,8,0,0,0,7.23-4.57,48,48,0,0,1,86.76,0,8,8,0,0,0,7.23,4.57H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM80,144a24,24,0,1,1,24,24A24,24,0,0,1,80,144Zm136,56H159.43a64.39,64.39,0,0,0-28.83-26.16,40,40,0,1,0-53.2,0A64.39,64.39,0,0,0,48.57,200H40V56H216ZM56,96V80a8,8,0,0,1,8-8H192a8,8,0,0,1,8,8v96a8,8,0,0,1-8,8H176a8,8,0,0,1,0-16h8V88H72v8a8,8,0,0,1-16,0Z" />
-        </svg>
-      ),
+      icoon: <HouseIcoon />,
       blok: <HomeBlok email={email} />,
       sectie: "Menu",
     },
@@ -84,22 +75,6 @@ export default function LeidinggevendeDashboard() {
         </svg>
       ),
       blok: <MatrixBlok email={email} />,
-      sectie: "Menu",
-    },
-    {
-      label: "Evaluaties",
-      icoon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          fill="currentColor"
-          viewBox="0 0 256 256"
-        >
-          <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-38.34-85.66a8,8,0,0,1,0,11.32l-48,48a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L116,164.69l42.34-42.35A8,8,0,0,1,169.66,122.34Z" />
-        </svg>
-      ),
-      blok: <p>Evaluaties blok komt hier</p>,
       sectie: "Menu",
     },
   ];

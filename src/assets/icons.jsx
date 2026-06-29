@@ -106,3 +106,19 @@ export function TestbuisIcoon({ size = 18 }) {
     </svg>
   );
 }
+
+export function StackSimpleIcoon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor">
+      <path d="M12,111l112,64a8,8,0,0,0,7.94,0l112-64a8,8,0,0,0,0-13.9l-112-64a8,8,0,0,0-7.94,0l-112,64A8,8,0,0,0,12,111ZM128,49.21,223.87,104,128,158.79,32.13,104ZM246.94,140A8,8,0,0,1,244,151L132,215a8,8,0,0,1-7.94,0L12,151A8,8,0,0,1,20,137.05l108,61.74,108-61.74A8,8,0,0,1,246.94,140Z" />
+    </svg>
+  );
+}
+
+export function HouseIcoon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 256 256" fill="currentColor">
+      <path d="M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z" />
+    </svg>
+  );
+}

@@ -78,24 +78,36 @@ export default function DashboardLayout({
             })}
           </nav>
 
-          <div
-            className="sidebar-footer"
-            onClick={() => {
-              if (instellingenBlok) {
-                setToonInstellingen(!toonInstellingen);
-                if (onNavigeer) onNavigeer();
-              }
-            }}
-            style={{
-              cursor: instellingenBlok ? "pointer" : "default",
-              background: toonInstellingen ? "rgba(255,255,255,0.18)" : "none",
-              borderRadius: "8px",
-            }}
-          >
-            <div className="sidebar-gebruiker">
+          <div className="sidebar-footer">
+            <div
+              className="sidebar-gebruiker"
+              onClick={() => {
+                if (instellingenBlok) {
+                  setToonInstellingen(!toonInstellingen);
+                  if (onNavigeer) onNavigeer();
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (!toonInstellingen)
+                  e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+              }}
+              onMouseLeave={(e) => {
+                if (!toonInstellingen)
+                  e.currentTarget.style.background = "transparent";
+              }}
+              style={{
+                cursor: instellingenBlok ? "pointer" : "default",
+                background: toonInstellingen ? "#fff" : "transparent",
+                color: toonInstellingen ? "var(--groen)" : "inherit",
+                borderRadius: "12px",
+              }}
+            >
               <div
                 className="avatar"
-                style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
+                style={{
+                  color: toonInstellingen ? "var(--groen)" : "#fff",
+                  border: toonInstellingen ? "2px solid var(--groen)" : "none",
+                }}
               >
                 {naam
                   ? naam
@@ -113,7 +125,7 @@ export default function DashboardLayout({
                   style={{
                     fontSize: "0.82rem",
                     fontWeight: 600,
-                    color: "#fff",
+                    color: toonInstellingen ? "var(--groen)" : "#fff",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -124,7 +136,9 @@ export default function DashboardLayout({
                 <p
                   style={{
                     fontSize: "0.72rem",
-                    color: "rgba(255,255,255,0.6)",
+                    color: toonInstellingen
+                      ? "rgba(46,125,50,0.7)"
+                      : "rgba(255,255,255,0.6)",
                   }}
                 >
                   {rol}
@@ -200,43 +214,48 @@ export default function DashboardLayout({
             Uitloggen
           </button>
         </div>
+        <div className="hoofd-inhoud">
+          {overrideBlok ? (
+            <div
+              style={{ width: "100%", maxWidth: "1000px", margin: "0 auto" }}
+            >
+              {overrideBlok}
+            </div>
+          ) : toonInstellingen && instellingenBlok ? (
+            <div
+              style={{ width: "100%", maxWidth: "1000px", margin: "0 auto" }}
+            >
+              {instellingenBlok}
+            </div>
+          ) : (
+            navigatie.map((item) =>
+              actief === item.label ? (
+                <div
+                  key={item.label}
+                  style={
+                    item.volledigBreed
+                      ? {
+                          position: "fixed",
+                          top: "72px",
+                          left: ingeklapt ? "76px" : "240px",
+                          right: 0,
+                          bottom: 0,
+                          zIndex: 5,
+                          overflowY: "auto",
+                          background: "var(--grijs-100)",
+                          transition: "left 0.25s ease",
+                        }
+                      : { width: "100%", maxWidth: "1000px", margin: "0 auto" }
+                  }
+                >
+                  {item.blok}
+                </div>
+              ) : null,
+            )
+          )}
 
-        {overrideBlok ? (
-          <div style={{ width: "100%", maxWidth: "1000px", margin: "0 auto" }}>
-            {overrideBlok}
-          </div>
-        ) : toonInstellingen && instellingenBlok ? (
-          <div style={{ width: "100%", maxWidth: "1000px", margin: "0 auto" }}>
-            {instellingenBlok}
-          </div>
-        ) : (
-          navigatie.map((item) =>
-            actief === item.label ? (
-              <div
-                key={item.label}
-                style={
-                  item.volledigBreed
-                    ? {
-                        position: "fixed",
-                        top: "72px",
-                        left: ingeklapt ? "76px" : "240px",
-                        right: 0,
-                        bottom: 0,
-                        zIndex: 5,
-                        overflowY: "auto",
-                        background: "var(--grijs-100)",
-                        transition: "left 0.25s ease",
-                      }
-                    : { width: "100%", maxWidth: "1000px", margin: "0 auto" }
-                }
-              >
-                {item.blok}
-              </div>
-            ) : null,
-          )
-        )}
-
-        {kinderen}
+          {kinderen}
+        </div>
       </main>
     </div>
   );
