@@ -363,7 +363,24 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
     )
       return;
     await supabase.from(geselecteerd.tabel).delete().eq("id", geselecteerd.id);
+
+    let ouder = null;
+    if (geselecteerd.type === "hoofdstuk") {
+      ouder = data.modules.find((m) => m.id === geselecteerd.module_id);
+      if (ouder) ouder = { ...ouder, type: "module", tabel: "modules" };
+    } else if (
+      geselecteerd.type === "paragraaf" ||
+      geselecteerd.type === "quiz"
+    ) {
+      ouder = data.hoofdstukken.find((h) => h.id === geselecteerd.hoofdstuk_id);
+      if (ouder) ouder = { ...ouder, type: "hoofdstuk", tabel: "hoofdstukken" };
+    } else if (geselecteerd.type === "opgave") {
+      ouder = data.paragrafen.find((p) => p.id === geselecteerd.paragraaf_id);
+      if (ouder) ouder = { ...ouder, type: "paragraaf", tabel: "paragrafen" };
+    }
+
     onHerlaad(geselecteerd.tabel);
+    if (ouder) onSelecteer(ouder);
   }
 
   if (!geselecteerd) {
@@ -677,7 +694,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                 <option value="invulvraag">Invulvraag</option>
                 <option value="drag-drop">Drag & Drop</option>
                 <option value="open-vraag">Open vraag</option>
-                <option value="koppelvraag">Koppelvraag</option>
+                <option value="categorisatievraag">Categorisatievraag</option>
               </select>
               <label
                 style={{
@@ -913,6 +930,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
           <NieuwItemFormulier
             geselecteerd={geselecteerd}
             autoOpen={geselecteerd?.formulierOpen}
+            data={data}
             onHerlaad={() => {
               const tabelMap = {
                 module: "hoofdstukken",
@@ -1025,7 +1043,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
   );
 }
 
-function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen }) {
+function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen, data }) {
   const [naam, setNaam] = useState("");
   const [type, setType] = useState("");
   const [toonFormulier, setToonFormulier] = useState(!!autoOpen);
@@ -1060,10 +1078,11 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen }) {
       woordenbank: [""],
     },
     "open-vraag": { vraag: "", modelantwoorden: [""] },
+    categorisatievraag: { vraag: "", categorieen: ["", ""], items: [] },
   };
 
   async function voegToe(opgaveType) {
-    if (!naam.trim()) return;
+    if (geselecteerd.type !== "paragraaf" && !naam.trim()) return;
     if (geselecteerd.type === "paragraaf" && !type) return;
 
     let tabel = kind.tabel;
@@ -1082,7 +1101,11 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen }) {
 
     const volgorde =
       bestaande && bestaande.length > 0 ? bestaande[0].volgorde + 1 : 0;
-    const nieuwItem = { naam, [veld]: geselecteerd.id, volgorde };
+    const autoNaam =
+      geselecteerd.type === "paragraaf" && !naam.trim()
+        ? `Opgave ${volgorde + 1}`
+        : naam;
+    const nieuwItem = { naam: autoNaam, [veld]: geselecteerd.id, volgorde };
 
     // Voeg type en lege inhoud toe voor opgaves
     if (geselecteerd.type === "paragraaf") {
@@ -1131,7 +1154,11 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen }) {
           </p>
           <input
             type="text"
-            placeholder="Naam van de opgave"
+            placeholder={
+              geselecteerd.type === "paragraaf"
+                ? `Opgave ${(data?.opgaves?.filter((o) => o.paragraaf_id === geselecteerd.id).length || 0) + 1}`
+                : "Naam van de opgave"
+            }
             value={naam}
             onChange={(e) => setNaam(e.target.value)}
             style={{
@@ -1166,6 +1193,7 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen }) {
               <option value="invulvraag">Invulvraag</option>
               <option value="drag-drop">Drag & Drop</option>
               <option value="open-vraag">Open vraag</option>
+              <option value="categorisatievraag">Categorisatievraag</option>
             </select>
           )}
 

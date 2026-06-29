@@ -302,14 +302,8 @@ export default function OpgaveContainer() {
           .insert(nieuweScores);
       }
 
-      console.log("moduleId:", moduleId);
-      console.log("scores:", scores);
-      console.log("opgaves lengte:", opgaves.length);
       if (moduleId) {
-        console.log("berekeningVoortgang wordt aangeroepen");
         await berekeningVoortgang();
-      } else {
-        console.log("moduleId is null, voortgang wordt niet berekend");
       }
       setOpgeslagen(true);
     }

@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Categorisatievraag opgave</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --lms-bg: #f0f2f5;
+        --lms-surface: #ffffff;
+        --lms-green: #2e7d32;
+        --lms-green-mid: #43a047;
+        --lms-green-light: #e8f5e9;
+        --lms-green-chip: #c8e6c9;
+        --lms-text: #1a1a1a;
+        --lms-text-muted: #5f6368;
+        --lms-border: #dadce0;
+        --lms-radius: 8px;
+        --lms-correct: #2e7d32;
+        --lms-correct-bg: #e8f5e9;
+        --lms-error: #c62828;
+        --lms-error-bg: #ffebee;
+      }
+      html,
+      body {
+        background: transparent;
+        font-family:
+          "Inter",
+          -apple-system,
+          sans-serif;
+        color: var(--lms-text);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+      .exercise {
+        background: var(--lms-surface);
+        border: 1px solid var(--lms-border);
+        border-radius: var(--lms-radius);
+        padding: 1.75rem 2rem;
+      }
+      .exercise-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--lms-text);
+        margin-bottom: 1.25rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--lms-border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .exercise-title::before {
+        content: "";
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: var(--lms-green);
+        border-radius: 2px;
+        flex-shrink: 0;
+      }
+
+      /* Item bank */
+      .bank-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--lms-text-muted);
+        margin-bottom: 10px;
+      }
+      .item-bank {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 14px 16px;
+        background: var(--lms-bg);
+        border: 1px solid var(--lms-border);
+        border-radius: var(--lms-radius);
+        margin-bottom: 1.5rem;
+        min-height: 54px;
+      }
+
+      /* Item chips */
+      .item-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        background: var(--lms-surface);
+        border: 1px solid var(--lms-border);
+        border-radius: 100px;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--lms-text);
+        cursor: grab;
+        transition:
+          background 0.1s,
+          border-color 0.1s,
+          box-shadow 0.1s,
+          opacity 0.1s;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      .item-chip:hover {
+        background: var(--lms-green-light);
+        border-color: var(--lms-green-mid);
+        color: var(--lms-green);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      .item-chip:active,
+      .item-chip.dragging {
+        cursor: grabbing;
+        opacity: 0.45;
+      }
+      .item-chip.used {
+        opacity: 0.3;
+        pointer-events: none;
+      }
+      .item-chip.selected {
+        background: var(--lms-green-light);
+        border-color: var(--lms-green);
+        color: var(--lms-green);
+        box-shadow: 0 0 0 2px var(--lms-green-chip);
+      }
+      .grip {
+        width: 8px;
+        height: 8px;
+        opacity: 0.4;
+        flex-shrink: 0;
+      }
+
+      /* Categorieën grid */
+      .categorieen-grid {
+        display: grid;
+        gap: 16px;
+        margin-bottom: 1.5rem;
+      }
+      .categorie-kolom {
+        border: 1px solid var(--lms-border);
+        border-radius: var(--lms-radius);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      .categorie-header {
+        padding: 10px 16px;
+        background: var(--lms-bg);
+        border-bottom: 1px solid var(--lms-border);
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--lms-text);
+      }
+      .categorie-drop {
+        min-height: 80px;
+        flex: 1;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        transition: background 0.12s;
+        align-self: stretch;
+      }
+      .categorie-drop.drag-over {
+        background: var(--lms-green-light);
+      }
+
+      /* Items in categorie */
+      .geplaatst-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        background: var(--lms-surface);
+        border: 1px solid var(--lms-border);
+        border-radius: 100px;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: var(--lms-text);
+        cursor: grab;
+        user-select: none;
+        transition:
+          background 0.1s,
+          border-color 0.1s;
+      }
+      .geplaatst-item:hover {
+        background: var(--lms-green-light);
+        border-color: var(--lms-green-mid);
+        color: var(--lms-green);
+      }
+      .geplaatst-item.correct {
+        background: var(--lms-correct-bg);
+        border-color: var(--lms-correct);
+        color: var(--lms-correct);
+        cursor: default;
+      }
+      .geplaatst-item.incorrect {
+        background: var(--lms-error-bg);
+        border-color: var(--lms-error);
+        color: var(--lms-error);
+        cursor: default;
+      }
+
+      /* Acties */
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .btn {
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+        padding: 8px 20px;
+        border-radius: 100px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.12s;
+      }
+      .btn-secondary {
+        background: transparent;
+        color: var(--lms-text-muted);
+        border: 1px solid var(--lms-border);
+      }
+      .btn-secondary:hover {
+        background: #f1f3f4;
+        color: var(--lms-text);
+      }
+      .feedback {
+        margin-top: 1rem;
+        padding: 10px 14px;
+        border-radius: var(--lms-radius);
+        font-size: 13.5px;
+        font-weight: 500;
+        display: none;
+        align-items: center;
+        gap: 8px;
+      }
+      .feedback.success {
+        display: flex;
+        background: var(--lms-correct-bg);
+        color: var(--lms-correct);
+        border: 1px solid #a5d6a7;
+      }
+      .feedback.partial {
+        display: flex;
+        background: #fff8e1;
+        color: #e65100;
+        border: 1px solid #ffd54f;
+      }
+      .feedback.wrong {
+        display: flex;
+        background: var(--lms-error-bg);
+        color: var(--lms-error);
+        border: 1px solid #ef9a9a;
+      }
+      .feedback.neutraal {
+        display: flex;
+        background: #f5f5f5;
+        color: #5f6368;
+        border: 1px solid #e0e0e0;
+      }
+      .laden {
+        padding: 2rem;
+        text-align: center;
+        color: var(--lms-text-muted);
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"><div class="laden">Opgave laden...</div></div>
+
+    <script>
+      const SUPABASE_URL = "https://jgycmakaugasithuszlc.supabase.co";
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpneWNtYWthdWdhc2l0aHVzemxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4Mjg1MjcsImV4cCI6MjA5NDQwNDUyN30.egxFASu1eRM1fH-zeAhM8ibXdP0Koc5JedpsX-d7j2A";
+      const { createClient } = supabase;
+      const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      const params = new URLSearchParams(window.location.search);
+      const opgaveId = params.get("id");
+
+      let gecontroleerd = false;
+      let opgaveData = null;
+      let dragged = null; // { tekst, van } — van = "bank" of categorieIndex
+      let selected = null; // geselecteerde chip in de bank
+      let heeftAntwoordGezien = false;
+
+      // State: welke items zitten in welke categorie
+      // plaatsingen[itemIndex] = categorieIndex | null
+      let plaatsingen = [];
+
+      async function laadOpgave() {
+        if (!opgaveId) {
+          document.getElementById("root").innerHTML =
+            '<div class="laden">Geen opgave ID opgegeven.</div>';
+          return;
+        }
+        const { data, error } = await db
+          .from("opgaves")
+          .select("*")
+          .eq("id", opgaveId)
+          .single();
+        if (error || !data) {
+          document.getElementById("root").innerHTML =
+            '<div class="laden">Opgave niet gevonden.</div>';
+          return;
+        }
+        opgaveData = data;
+        plaatsingen = new Array(data.inhoud.items.length).fill(null);
+        bouwOpgave(data.inhoud);
+      }
+
+      function bouwOpgave(inhoud) {
+        const root = document.getElementById("root");
+
+        // Schud items door elkaar
+        const volgorde = inhoud.items
+          .map((_, i) => i)
+          .sort(() => Math.random() - 0.5);
+
+        const chipsHTML = volgorde
+          .map((i) => {
+            const item = inhoud.items[i];
+            return `<div class="item-chip" draggable="true" data-index="${i}" id="chip-${i}">
+            <svg class="grip" viewBox="0 0 8 8" fill="currentColor">
+              <circle cx="2" cy="2" r="1"/><circle cx="6" cy="2" r="1"/>
+              <circle cx="2" cy="6" r="1"/><circle cx="6" cy="6" r="1"/>
+            </svg>
+            ${item.tekst}
+          </div>`;
+          })
+          .join("");
+
+        // Bepaal grid kolommen op basis van aantal categorieën
+        const aantalCols =
+          inhoud.categorieen.length <= 3 ? inhoud.categorieen.length : 2;
+        const kolommenHTML = inhoud.categorieen
+          .map(
+            (cat, catIndex) => `
+          <div class="categorie-kolom">
+            <div class="categorie-header">${cat}</div>
+            <div class="categorie-drop" id="drop-${catIndex}" data-cat="${catIndex}"></div>
+          </div>
+        `,
+          )
+          .join("");
+
+        root.innerHTML = `
+          <div class="exercise">
+            <div class="exercise-title">${inhoud.vraag}</div>
+            <div class="bank-label">Sleep de items naar de juiste categorie</div>
+            <div class="item-bank" id="item-bank">${chipsHTML}</div>
+            <div class="categorieen-grid" id="categorieen-grid" style="grid-template-columns: repeat(${aantalCols}, 1fr)">${kolommenHTML}</div>
+            <div class="actions">
+              <button class="btn btn-secondary" id="btnOpnieuw">Opnieuw</button>
+            </div>
+            <div class="feedback" id="feedback">
+              <span id="feedbackIcon"></span>
+              <span id="feedbackText"></span>
+            </div>
+          </div>
+        `;
+
+        koppelEvents();
+      }
+
+      function koppelEvents() {
+        document
+          .getElementById("btnOpnieuw")
+          .addEventListener("click", opnieuw);
+
+        // Chip events (bank)
+        document.querySelectorAll(".item-chip").forEach((chip) => {
+          chip.addEventListener("dragstart", (e) => {
+            dragged = { index: parseInt(chip.dataset.index), van: "bank" };
+            chip.classList.add("dragging");
+            e.dataTransfer.effectAllowed = "move";
+          });
+          chip.addEventListener("dragend", () => {
+            chip.classList.remove("dragging");
+            dragged = null;
+          });
+          chip.addEventListener("click", () => {
+            if (chip.classList.contains("used")) return;
+            if (selected === chip) {
+              chip.classList.remove("selected");
+              selected = null;
+              return;
+            }
+            if (selected) selected.classList.remove("selected");
+            selected = chip;
+            chip.classList.add("selected");
+          });
+        });
+
+        // Drop zone events (categorieën)
+        document.querySelectorAll(".categorie-drop").forEach((drop) => {
+          const catIndex = parseInt(drop.dataset.cat);
+
+          drop.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            drop.classList.add("drag-over");
+          });
+          drop.addEventListener("dragleave", () =>
+            drop.classList.remove("drag-over"),
+          );
+          drop.addEventListener("drop", (e) => {
+            e.preventDefault();
+            drop.classList.remove("drag-over");
+            if (dragged && !gecontroleerd) {
+              plaatsItem(dragged.index, catIndex);
+            }
+          });
+          drop.addEventListener("click", () => {
+            if (gecontroleerd || !selected) return;
+            plaatsItem(parseInt(selected.dataset.index), catIndex);
+            selected.classList.remove("selected");
+            selected = null;
+          });
+        });
+
+        // Bank als drop target (terugplaatsen)
+        const bank = document.getElementById("item-bank");
+        bank.addEventListener("dragover", (e) => e.preventDefault());
+        bank.addEventListener("drop", (e) => {
+          e.preventDefault();
+          if (dragged && dragged.van === "categorie" && !gecontroleerd) {
+            verwijderUitCategorie(dragged.index);
+          }
+        });
+      }
+
+      function plaatsItem(itemIndex, catIndex) {
+        // Als het item al ergens zit, eerst verwijderen
+        if (plaatsingen[itemIndex] !== null) {
+          verwijderUitCategorie(itemIndex);
+        }
+
+        plaatsingen[itemIndex] = catIndex;
+        const chip = document.getElementById(`chip-${itemIndex}`);
+        if (chip) chip.classList.add("used");
+
+        const drop = document.getElementById(`drop-${catIndex}`);
+        const item = opgaveData.inhoud.items[itemIndex];
+
+        const geplaatst = document.createElement("div");
+        geplaatst.className = "geplaatst-item";
+        geplaatst.draggable = true;
+        geplaatst.dataset.index = itemIndex;
+        geplaatst.id = `geplaatst-${itemIndex}`;
+        geplaatst.innerHTML = `
+          <svg class="grip" viewBox="0 0 8 8" fill="currentColor">
+            <circle cx="2" cy="2" r="1"/><circle cx="6" cy="2" r="1"/>
+            <circle cx="2" cy="6" r="1"/><circle cx="6" cy="6" r="1"/>
+          </svg>
+          ${item.tekst}
+        `;
+
+        // Drag vanuit categorie terug naar bank of naar andere categorie
+        geplaatst.addEventListener("dragstart", (e) => {
+          dragged = { index: itemIndex, van: "categorie" };
+          geplaatst.style.opacity = "0.45";
+          e.dataTransfer.effectAllowed = "move";
+        });
+        geplaatst.addEventListener("dragend", () => {
+          geplaatst.style.opacity = "";
+          dragged = null;
+        });
+
+        // Klik om terug naar bank te sturen
+        geplaatst.addEventListener("click", () => {
+          if (gecontroleerd) return;
+          verwijderUitCategorie(itemIndex);
+        });
+
+        drop.appendChild(geplaatst);
+        stuurHoogte();
+      }
+
+      function verwijderUitCategorie(itemIndex) {
+        const geplaatst = document.getElementById(`geplaatst-${itemIndex}`);
+        if (geplaatst) geplaatst.remove();
+        plaatsingen[itemIndex] = null;
+        const chip = document.getElementById(`chip-${itemIndex}`);
+        if (chip) chip.classList.remove("used");
+        stuurHoogte();
+      }
+
+      function controleer() {
+        if (gecontroleerd || !opgaveData) return 0;
+
+        const items = opgaveData.inhoud.items;
+        const alleLeeg = plaatsingen.every((p) => p === null);
+
+        if (alleLeeg) {
+          const feedback = document.getElementById("feedback");
+          feedback.className = "feedback neutraal";
+          document.getElementById("feedbackIcon").textContent = "○";
+          document.getElementById("feedbackText").textContent =
+            "Sleep eerst de items naar de juiste categorie.";
+          return 0;
+        }
+
+        gecontroleerd = true;
+        let correct = 0;
+
+        items.forEach((item, index) => {
+          const geplaatst = document.getElementById(`geplaatst-${index}`);
+          if (!geplaatst) return;
+
+          const isCorrect = plaatsingen[index] === item.categorie;
+          geplaatst.draggable = false;
+          geplaatst.style.cursor = "default";
+
+          if (isCorrect) {
+            geplaatst.classList.add("correct");
+            correct++;
+          } else {
+            geplaatst.classList.add("incorrect");
+          }
+        });
+
+        // Items in bank ook blokkeren
+        document
+          .querySelectorAll(".item-chip")
+          .forEach((c) => (c.style.pointerEvents = "none"));
+
+        const totaal = items.length;
+        const score = Math.round((correct / totaal) * 100);
+        const feedback = document.getElementById("feedback");
+        feedback.className = "feedback";
+
+        if (score === 100) {
+          feedback.classList.add("success");
+          document.getElementById("feedbackIcon").textContent = "✓";
+          document.getElementById("feedbackText").textContent =
+            `Uitstekend! Alle ${totaal} items correct geplaatst.`;
+        } else if (score === 0) {
+          feedback.classList.add("wrong");
+          document.getElementById("feedbackIcon").textContent = "✕";
+          document.getElementById("feedbackText").textContent =
+            "Geen enkel item correct. Probeer opnieuw.";
+        } else {
+          feedback.classList.add("partial");
+          document.getElementById("feedbackIcon").textContent = "◑";
+          document.getElementById("feedbackText").textContent =
+            `${correct} van de ${totaal} items correct geplaatst.`;
+        }
+
+        window.parent.postMessage(
+          {
+            type: "opgave_score",
+            opgave_id: opgaveId,
+            score: heeftAntwoordGezien ? 0 : score,
+          },
+          "*",
+        );
+
+        return score;
+      }
+
+      function opnieuw() {
+        if (!opgaveData) return;
+        gecontroleerd = false;
+        plaatsingen = new Array(opgaveData.inhoud.items.length).fill(null);
+
+        // Verwijder alle geplaatste items
+        document
+          .querySelectorAll(".geplaatst-item")
+          .forEach((el) => el.remove());
+
+        // Reset chips in bank
+        document.querySelectorAll(".item-chip").forEach((c) => {
+          c.classList.remove("used", "selected", "dragging");
+          c.style.pointerEvents = "";
+        });
+
+        selected = null;
+        document.getElementById("feedback").className = "feedback";
+        stuurHoogte();
+
+        window.parent.postMessage(
+          { type: "opgave_reset", opgave_id: opgaveId },
+          "*",
+        );
+      }
+
+      function reset() {
+        heeftAntwoordGezien = false;
+        opnieuw();
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.data.type === "controleer") controleer();
+        if (event.data.type === "reset") reset();
+      });
+
+      laadOpgave();
+
+      function stuurHoogte() {
+        window.parent.postMessage(
+          { type: "iframe_hoogte", hoogte: document.body.scrollHeight },
+          "*",
+        );
+      }
+      window.addEventListener("load", stuurHoogte);
+      new ResizeObserver(stuurHoogte).observe(document.body);
+    </script>
+  </body>
+</html>

@@ -541,6 +541,221 @@ function OpenVraagEditor({ opgave, onHerlaad }) {
   );
 }
 
+// ── Categorisatievraag editor ──
+function CategorisatieEditor({ opgave, onHerlaad }) {
+  const inhoud = opgave.inhoud || {};
+  const [vraag, setVraag] = useState(inhoud.vraag || "");
+  const [categorieen, setCategorieen] = useState(
+    inhoud.categorieen || ["", ""],
+  );
+  const [items, setItems] = useState(inhoud.items || []);
+  const [opgeslagen, setOpgeslagen] = useState(false);
+
+  async function slaOp() {
+    await supabase
+      .from("opgaves")
+      .update({ inhoud: { vraag, categorieen, items } })
+      .eq("id", opgave.id);
+    setOpgeslagen(true);
+    onHerlaad();
+  }
+
+  function updateCategorie(index, waarde) {
+    setCategorieen((prev) => prev.map((c, i) => (i === index ? waarde : c)));
+    setOpgeslagen(false);
+  }
+
+  function voegCategorieToe() {
+    setCategorieen((prev) => [...prev, ""]);
+    setOpgeslagen(false);
+  }
+
+  function verwijderCategorie(index) {
+    setCategorieen((prev) => prev.filter((_, i) => i !== index));
+    setItems((prev) =>
+      prev
+        .filter((item) => item.categorie !== index)
+        .map((item) => ({
+          ...item,
+          categorie:
+            item.categorie > index ? item.categorie - 1 : item.categorie,
+        })),
+    );
+    setOpgeslagen(false);
+  }
+
+  function voegItemToe() {
+    setItems((prev) => [...prev, { tekst: "", categorie: 0 }]);
+    setOpgeslagen(false);
+  }
+
+  function updateItem(index, veld, waarde) {
+    setItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [veld]: waarde } : item)),
+    );
+    setOpgeslagen(false);
+  }
+
+  function verwijderItem(index) {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+    setOpgeslagen(false);
+  }
+
+  return (
+    <div style={{ marginTop: "16px" }}>
+      <InhoudHeader />
+      <label style={labelStijl}>Vraag / instructie</label>
+      <input
+        type="text"
+        value={vraag}
+        onChange={(e) => {
+          setVraag(e.target.value);
+          setOpgeslagen(false);
+        }}
+        style={inputStijl}
+      />
+
+      <label style={{ ...labelStijl, marginBottom: "8px" }}>Categorieën</label>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          marginBottom: "10px",
+        }}
+      >
+        {categorieen.map((cat, index) => (
+          <div
+            key={index}
+            style={{ display: "flex", alignItems: "center", gap: "8px" }}
+          >
+            <input
+              type="text"
+              value={cat}
+              onChange={(e) => updateCategorie(index, e.target.value)}
+              placeholder={`Categorie ${index + 1}`}
+              style={{
+                flex: 1,
+                padding: "7px 10px",
+                borderRadius: "6px",
+                border: "1px solid var(--grijs-200)",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "0.82rem",
+              }}
+            />
+            {categorieen.length > 2 && (
+              <button
+                onClick={() => verwijderCategorie(index)}
+                style={verwijderKnop}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "var(--rood-licht)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "none")
+                }
+              >
+                <VerwijderIcoon />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      <button
+        className="knop knop-secundair"
+        style={{
+          fontSize: "0.78rem",
+          padding: "5px 12px",
+          marginBottom: "20px",
+        }}
+        onClick={voegCategorieToe}
+      >
+        + Categorie toevoegen
+      </button>
+
+      <label style={{ ...labelStijl, marginBottom: "8px" }}>Items</label>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          marginBottom: "10px",
+        }}
+      >
+        {items.map((item, index) => (
+          <div
+            key={index}
+            style={{ display: "flex", alignItems: "center", gap: "8px" }}
+          >
+            <input
+              type="text"
+              value={item.tekst}
+              onChange={(e) => updateItem(index, "tekst", e.target.value)}
+              placeholder={`Item ${index + 1}`}
+              style={{
+                flex: 1,
+                padding: "7px 10px",
+                borderRadius: "6px",
+                border: "1px solid var(--grijs-200)",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "0.82rem",
+              }}
+            />
+            <select
+              value={item.categorie}
+              onChange={(e) =>
+                updateItem(index, "categorie", parseInt(e.target.value))
+              }
+              style={{
+                padding: "7px 10px",
+                borderRadius: "6px",
+                border: "1px solid var(--grijs-200)",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "0.82rem",
+                background: "white",
+              }}
+            >
+              {categorieen.map((cat, i) => (
+                <option key={i} value={i}>
+                  {cat || `Categorie ${i + 1}`}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => verwijderItem(index)}
+              style={verwijderKnop}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "var(--rood-licht)")
+              }
+              onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+            >
+              <VerwijderIcoon />
+            </button>
+          </div>
+        ))}
+      </div>
+      <button
+        className="knop knop-secundair"
+        style={{
+          fontSize: "0.78rem",
+          padding: "5px 12px",
+          marginBottom: "16px",
+        }}
+        onClick={voegItemToe}
+      >
+        + Item toevoegen
+      </button>
+      <br />
+      <button
+        className="knop knop-primair"
+        style={{ fontSize: "0.82rem" }}
+        onClick={slaOp}
+      >
+        {opgeslagen ? "✓ Opgeslagen" : "Opslaan"}
+      </button>
+    </div>
+  );
+}
+
 // ── Hoofdcomponent ──
 export default function OpgaveBeheer({ opgave, onHerlaad }) {
   const inhoud = opgave.inhoud || {};
@@ -731,6 +946,8 @@ export default function OpgaveBeheer({ opgave, onHerlaad }) {
     return <DragDropEditor opgave={opgave} onHerlaad={onHerlaad} />;
   if (opgave.sjabloon === "open-vraag")
     return <OpenVraagEditor opgave={opgave} onHerlaad={onHerlaad} />;
+  if (opgave.sjabloon === "categorisatievraag")
+    return <CategorisatieEditor opgave={opgave} onHerlaad={onHerlaad} />;
 
   return (
     <div style={{ marginTop: "16px" }}>
