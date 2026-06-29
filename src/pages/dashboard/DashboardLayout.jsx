@@ -14,6 +14,7 @@ export default function DashboardLayout({
   const [ingeklapt, setIngeklapt] = useState(false);
   const [actief, setActief] = useState(navigatie[0]?.label);
   const [toonInstellingen, setToonInstellingen] = useState(false);
+  const actiefLabel = toonInstellingen ? "Instellingen" : actief;
 
   useEffect(() => {
     if (rol === "Beheerder") {
@@ -61,7 +62,7 @@ export default function DashboardLayout({
                   {items.map((item) => (
                     <button
                       key={item.label}
-                      className={`nav-item ${actief === item.label ? "actief" : ""}`}
+                      className={`nav-item ${!toonInstellingen && actief === item.label ? "actief" : ""}`}
                       onClick={() => {
                         setActief(item.label);
                         setToonInstellingen(false);
@@ -77,14 +78,21 @@ export default function DashboardLayout({
             })}
           </nav>
 
-          <div className="sidebar-footer">
-            <div
-              className="sidebar-gebruiker"
-              onClick={() =>
-                instellingenBlok && setToonInstellingen(!toonInstellingen)
+          <div
+            className="sidebar-footer"
+            onClick={() => {
+              if (instellingenBlok) {
+                setToonInstellingen(!toonInstellingen);
+                if (onNavigeer) onNavigeer();
               }
-              style={{ cursor: instellingenBlok ? "pointer" : "default" }}
-            >
+            }}
+            style={{
+              cursor: instellingenBlok ? "pointer" : "default",
+              background: toonInstellingen ? "rgba(255,255,255,0.18)" : "none",
+              borderRadius: "8px",
+            }}
+          >
+            <div className="sidebar-gebruiker">
               <div
                 className="avatar"
                 style={{ background: "rgba(255,255,255,0.2)", color: "#fff" }}
@@ -163,7 +171,7 @@ export default function DashboardLayout({
       >
         <div className="topbar">
           <div>
-            <p className="topbar-titel">{actief}</p>
+            <p className="topbar-titel">{actiefLabel}</p>
           </div>
           <button
             className="knop knop-ghost"
