@@ -252,10 +252,10 @@ body {
   text-align: left;
 }
 .sidebar.ingeklapt .nav-item {
-  padding: 8px;
-  justify-content: center;
+  padding: 8px 10px;
   gap: 0;
 }
+
 .nav-item:hover {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
