@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { supabase } from "../../../lib/supabase";
 import { haalGebruikerOp } from "../../../lib/auth";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../DashboardLayout";
 import MatrixBlok from "./blokken/MatrixBlok";
 import HomeBlok from "./blokken/HomeBlok";
@@ -9,33 +10,34 @@ import InstellingenBlok from "./blokken/InstellingenBlok";
 import { HouseIcoon } from "../../../assets/icons.jsx";
 
 export default function LeidinggevendeDashboard() {
-  const [email, setEmail] = useState(() => localStorage.getItem("email"));
-  const [naam, setNaam] = useState(() => localStorage.getItem("naam"));
-  const [fout, setFout] = useState(null);
-  const [laden, setLaden] = useState(false);
+  const email = localStorage.getItem("email");
+  const naam = localStorage.getItem("naam");
+
   const navigate = useNavigate();
 
-  async function handleLogin(ingevoerdEmail) {
-    setLaden(true);
-    setFout(null);
-    const gebruiker = await haalGebruikerOp(ingevoerdEmail);
-
-    if (!gebruiker) {
-      setFout("Dit e-mailadres is niet bekend in het systeem.");
-      setLaden(false);
-      return;
+  useEffect(() => {
+    async function herstelSessie() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/");
+        return;
+      }
+      const gebruiker = await haalGebruikerOp(session.user.email);
+      if (gebruiker) {
+        localStorage.setItem("email", session.user.email);
+        localStorage.setItem("naam", gebruiker.naam);
+        localStorage.setItem("rol", gebruiker.rol);
+        window.location.reload();
+      } else {
+        navigate("/");
+      }
     }
+    if (!email) herstelSessie();
+  }, [email, navigate]);
 
-    localStorage.setItem("email", ingevoerdEmail);
-    localStorage.setItem("naam", gebruiker.naam);
-    setEmail(ingevoerdEmail);
-    setNaam(gebruiker.naam);
-
-    if (gebruiker.rol === "trainee") navigate("/dashboard/trainee");
-    else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
-
-    setLaden(false);
-  }
+  if (!email) return null;
 
   const navigatie = [
     {
@@ -78,25 +80,6 @@ export default function LeidinggevendeDashboard() {
       sectie: "Menu",
     },
   ];
-
-  if (!email) {
-    return (
-      <div className="login-scherm">
-        <h1>Tilstra LMS</h1>
-        <h2>Inloggen</h2>
-        <input
-          type="email"
-          placeholder="Jouw e-mailadres"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleLogin(e.target.value);
-          }}
-        />
-        {laden && <p>Bezig met inloggen...</p>}
-        {fout && <p style={{ color: "red" }}>{fout}</p>}
-        <p>Druk op Enter om in te loggen</p>
-      </div>
-    );
-  }
 
   return (
     <DashboardLayout

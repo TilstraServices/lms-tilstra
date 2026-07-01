@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { haalGebruikerOp } from "../lib/auth";
+import { supabase } from "../lib/supabase";
 import "./dashboard/dashboard.css";
 
 export default function Start() {
@@ -9,27 +10,48 @@ export default function Start() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const opgeslagenEmail = localStorage.getItem("email");
-    if (!opgeslagenEmail) return;
-
-    async function stuurDoor() {
+    async function controleerSessie() {
       setLaden(true);
-      const gebruiker = await haalGebruikerOp(opgeslagenEmail);
 
-      if (!gebruiker) {
+      // Controleer of er een actieve Supabase Auth sessie is
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
         localStorage.removeItem("email");
         localStorage.removeItem("naam");
+        localStorage.removeItem("rol");
         setLaden(false);
         return;
       }
 
+      const email = session.user.email;
+      const gebruiker = await haalGebruikerOp(email);
+
+      if (!gebruiker) {
+        await supabase.auth.signOut();
+        localStorage.removeItem("email");
+        localStorage.removeItem("naam");
+        localStorage.removeItem("rol");
+        setLaden(false);
+        return;
+      }
+
+      localStorage.setItem("email", email);
       localStorage.setItem("naam", gebruiker.naam);
       localStorage.setItem("rol", gebruiker.rol);
 
-      if (gebruiker.rol === "trainee") navigate("/dashboard/trainee");
-      else if (gebruiker.rol === "leidinggevende")
-        navigate("/dashboard/leidinggevende");
-      else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
+      const redirect = new URLSearchParams(window.location.search).get(
+        "redirect",
+      );
+      if (gebruiker.rol === "trainee") {
+        if (redirect) window.location.href = redirect;
+        else navigate("/dashboard/trainee");
+      } else if (gebruiker.rol === "leidinggevende") {
+        if (redirect) window.location.href = redirect;
+        else navigate("/dashboard/leidinggevende");
+      } else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
       else if (gebruiker.rol === "klant") {
         const redirect = new URLSearchParams(window.location.search).get(
           "redirect",
@@ -39,16 +61,30 @@ export default function Start() {
       }
     }
 
-    stuurDoor();
+    controleerSessie();
   }, [navigate]);
 
-  async function handleLogin(ingevoerdEmail) {
+  async function handleLogin(ingevoerdEmail, ingevoerdWachtwoord) {
     setLaden(true);
     setFout(null);
+
+    // Stap 1: inloggen via Supabase Auth
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: ingevoerdEmail,
+      password: ingevoerdWachtwoord,
+    });
+
+    if (authError) {
+      setFout("Onjuist e-mailadres of wachtwoord.");
+      setLaden(false);
+      return;
+    }
+
+    // Stap 2: rol en naam ophalen uit gebruikers tabel
     const gebruiker = await haalGebruikerOp(ingevoerdEmail);
 
     if (!gebruiker) {
-      setFout("Dit e-mailadres is niet bekend in het systeem.");
+      setFout("Dit account is niet gekoppeld aan het systeem.");
       setLaden(false);
       return;
     }
@@ -57,10 +93,16 @@ export default function Start() {
     localStorage.setItem("naam", gebruiker.naam);
     localStorage.setItem("rol", gebruiker.rol);
 
-    if (gebruiker.rol === "trainee") navigate("/dashboard/trainee");
-    else if (gebruiker.rol === "leidinggevende")
-      navigate("/dashboard/leidinggevende");
-    else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
+    const redirect = new URLSearchParams(window.location.search).get(
+      "redirect",
+    );
+    if (gebruiker.rol === "trainee") {
+      if (redirect) window.location.href = redirect;
+      else navigate("/dashboard/trainee");
+    } else if (gebruiker.rol === "leidinggevende") {
+      if (redirect) window.location.href = redirect;
+      else navigate("/dashboard/leidinggevende");
+    } else if (gebruiker.rol === "beheerder") navigate("/dashboard/beheer");
     else if (gebruiker.rol === "klant") {
       const redirect = new URLSearchParams(window.location.search).get(
         "redirect",
@@ -78,12 +120,17 @@ export default function Start() {
     <div className="login-scherm">
       <h1>Tilstra LMS</h1>
       <h2>Inloggen</h2>
+      <input type="email" placeholder="Jouw e-mailadres" id="email-input" />
       <input
-        type="email"
-        placeholder="Jouw e-mailadres"
+        type="password"
+        placeholder="Wachtwoord"
+        id="wachtwoord-input"
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            handleLogin(e.target.value);
+            const email = document.getElementById("email-input").value;
+            const wachtwoord =
+              document.getElementById("wachtwoord-input").value;
+            handleLogin(email, wachtwoord);
           }
         }}
       />

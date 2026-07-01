@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "./dashboard.css";
+import { supabase } from "../../lib/supabase";
 
 export default function DashboardLayout({
   navigatie,
@@ -196,9 +197,11 @@ export default function DashboardLayout({
               alignItems: "center",
               gap: "7px",
             }}
-            onClick={() => {
+            onClick={async () => {
+              await supabase.auth.signOut();
               localStorage.removeItem("email");
               localStorage.removeItem("naam");
+              localStorage.removeItem("rol");
               window.location.href = "/lms-tilstra/";
             }}
           >
