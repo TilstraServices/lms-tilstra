@@ -142,11 +142,13 @@ function Competentiematrix({
       setFeedback({
         type: "success",
         tekst: "✓ Opgeslagen! De matrix is bijgewerkt.",
+        popup: true,
       });
     } catch {
       setFeedback({
         type: "error",
         tekst: "✕ Opslaan mislukt. Probeer opnieuw.",
+        popup: true,
       });
     }
   }
@@ -195,15 +197,6 @@ function Competentiematrix({
 
   return (
     <div style={stijlen.pagina}>
-      {/* Terug knop voor leidinggevende */}
-      {gebruiker?.rol === "leidinggevende" && (
-        <div style={stijlen.terugWrap}>
-          <span style={stijlen.terugKnop} onClick={() => setScherm("menu")}>
-            ← Terug naar overzicht
-          </span>
-        </div>
-      )}
-
       {/* Header */}
       <div style={stijlen.headerKaart}>
         <h1 style={stijlen.headerTitel}>
@@ -309,8 +302,46 @@ function Competentiematrix({
         )}
       </div>
 
-      {/* Feedback */}
-      {feedback && (
+      {/* Feedback popup */}
+      {feedback?.popup && (
+        <div style={stijlen.popupOverlay} onClick={() => setFeedback(null)}>
+          <div style={stijlen.popup}>
+            <p style={{ fontSize: "2rem", marginBottom: "8px" }}>✓</p>
+            <p
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                color: "#1b5e20",
+                marginBottom: "4px",
+              }}
+            >
+              Opgeslagen!
+            </p>
+            <p style={{ fontSize: "0.85rem", color: "#616161" }}>
+              De matrix is bijgewerkt.
+            </p>
+            <button
+              onClick={() => setFeedback(null)}
+              style={{
+                marginTop: "16px",
+                padding: "8px 24px",
+                borderRadius: "50px",
+                background: "#2e7d32",
+                color: "white",
+                border: "none",
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback inline */}
+      {feedback && !feedback.popup && (
         <div
           style={{
             ...stijlen.feedback,
@@ -466,6 +497,25 @@ const stijlen = {
     background: "#ffebee",
     border: "1px solid #ef9a9a",
     color: "#c62828",
+  },
+
+  popupOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.4)",
+    zIndex: 1000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  popup: {
+    background: "white",
+    borderRadius: "16px",
+    padding: "32px 40px",
+    textAlign: "center",
+    boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
+    maxWidth: "340px",
+    width: "90%",
   },
 };
 
