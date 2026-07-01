@@ -188,6 +188,12 @@ function NieuweGebruikerFormulier({ leidinggevenden, onOpslaan, onAnnuleer }) {
       setFout("Naam en email zijn verplicht.");
       return;
     }
+
+    const bevestigd = window.confirm(
+      `⚠️ Vergeet niet om "${naam}" (${email}) ook handmatig aan te maken in Supabase Auth!\n\nKlik OK als je dit hebt gedaan of dit gaat doen.`,
+    );
+    if (!bevestigd) return;
+
     setLaden(true);
     setFout(null);
     await onOpslaan({ naam, email, rol, pad, leidinggevendeEmail });
