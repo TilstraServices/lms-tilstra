@@ -24,7 +24,11 @@ function Competentiematrix({
   emailProp = null,
   toonUitloggen = true,
 }) {
-  const [gebruiker, setGebruiker] = useState(null);
+  const [gebruiker, setGebruiker] = useState(() => {
+    const email = localStorage.getItem("email");
+    const rol = localStorage.getItem("rol");
+    return email && rol ? { email, rol } : null;
+  });
   const [scherm, setScherm] = useState(emailProp ? "laden" : "login");
   const [traineeEmail, setTraineeEmail] = useState(null);
   const [traineeNaam, setTraineeNaam] = useState(null);
@@ -111,32 +115,18 @@ function Competentiematrix({
     try {
       const beloften = [];
       for (const [indId, sc] of Object.entries(scores)) {
-        if (sc.pta !== undefined) {
-          beloften.push(
-            supabase.from("competenties").upsert(
-              {
-                trainee_email: traineeEmail,
-                indicator_id: indId,
-                pta: sc.pta,
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: "trainee_email,indicator_id" },
-            ),
-          );
-        }
-        if (sc.evaluatie !== undefined) {
-          beloften.push(
-            supabase.from("competenties").upsert(
-              {
-                trainee_email: traineeEmail,
-                indicator_id: indId,
-                evaluatie: sc.evaluatie,
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: "trainee_email,indicator_id" },
-            ),
-          );
-        }
+        const update = {
+          trainee_email: traineeEmail,
+          indicator_id: indId,
+          updated_at: new Date().toISOString(),
+        };
+        if (sc.pta !== undefined) update.pta = sc.pta;
+        if (sc.evaluatie !== undefined) update.evaluatie = sc.evaluatie;
+        beloften.push(
+          supabase
+            .from("competenties")
+            .upsert(update, { onConflict: "trainee_email,indicator_id" }),
+        );
       }
       await Promise.all(beloften);
 
