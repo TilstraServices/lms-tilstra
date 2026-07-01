@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Start from "./pages/Start";
+import ResetWachtwoord from "./pages/ResetWachtwoord";
 import Competentiematrix from "./pages/competentiematrix/Competentiematrix";
 import Beheer from "./pages/competentiematrix/Beheer";
 import TraineeDashboard from "./pages/dashboard/trainee/Dashboard";
@@ -47,6 +48,7 @@ function App() {
             </div>
           }
         />
+        <Route path="/reset-wachtwoord" element={<ResetWachtwoord />} />
       </Routes>
     </BrowserRouter>
   );

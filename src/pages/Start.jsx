@@ -7,6 +7,10 @@ import "./dashboard/dashboard.css";
 export default function Start() {
   const [fout, setFout] = useState(null);
   const [laden, setLaden] = useState(false);
+  const [resetLaden, setResetLaden] = useState(false);
+  const [toonReset, setToonReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSucces, setResetSucces] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -111,6 +115,28 @@ export default function Start() {
       else navigate("/klant");
     }
   }
+  async function handleResetEmail() {
+    if (!resetEmail) {
+      setFout("Vul je e-mailadres in.");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      setFout("Vul een geldig e-mailadres in.");
+      return;
+    }
+    setResetLaden(true);
+    setFout(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/lms-tilstra/reset-wachtwoord`,
+    });
+    if (error) {
+      setFout("Versturen mislukt. Controleer het e-mailadres.");
+    } else {
+      setResetSucces(true);
+    }
+    setResetLaden(false);
+  }
 
   if (laden) {
     return <p style={{ padding: "2rem" }}>Bezig met inloggen...</p>;
@@ -119,23 +145,85 @@ export default function Start() {
   return (
     <div className="login-scherm">
       <h1>Tilstra LMS</h1>
-      <h2>Inloggen</h2>
-      <input type="email" placeholder="Jouw e-mailadres" id="email-input" />
-      <input
-        type="password"
-        placeholder="Wachtwoord"
-        id="wachtwoord-input"
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            const email = document.getElementById("email-input").value;
-            const wachtwoord =
-              document.getElementById("wachtwoord-input").value;
-            handleLogin(email, wachtwoord);
-          }
-        }}
-      />
-      {fout && <p style={{ color: "red" }}>{fout}</p>}
-      <p>Druk op Enter om in te loggen</p>
+
+      {toonReset ? (
+        <>
+          <h2>Wachtwoord vergeten</h2>
+          {resetSucces ? (
+            <p style={{ color: "#2E7D32", fontWeight: 600 }}>
+              ✓ Reset link verstuurd! Controleer je inbox.
+            </p>
+          ) : (
+            <>
+              <input
+                type="email"
+                placeholder="Jouw e-mailadres"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleResetEmail();
+                }}
+              />
+              {fout && <p style={{ color: "#C62828" }}>{fout}</p>}
+              <button
+                onClick={handleResetEmail}
+                disabled={resetLaden}
+                style={{
+                  background: "#2E7D32",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50px",
+                  padding: "12px 32px",
+                  fontSize: "0.9rem",
+                  fontWeight: 600,
+                  cursor: laden ? "not-allowed" : "pointer",
+                  fontFamily: "Inter, sans-serif",
+                  width: "320px",
+                }}
+              >
+                {resetLaden ? "Versturen..." : "Stuur reset link"}
+              </button>
+              <p
+                onClick={() => {
+                  setToonReset(false);
+                  setFout(null);
+                }}
+                style={{ cursor: "pointer", color: "#2E7D32" }}
+              >
+                ← Terug naar inloggen
+              </p>
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          <h2>Inloggen</h2>
+          <input type="email" placeholder="Jouw e-mailadres" id="email-input" />
+          <input
+            type="password"
+            placeholder="Wachtwoord"
+            id="wachtwoord-input"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const email = document.getElementById("email-input").value;
+                const wachtwoord =
+                  document.getElementById("wachtwoord-input").value;
+                handleLogin(email, wachtwoord);
+              }
+            }}
+          />
+          {fout && <p style={{ color: "#C62828" }}>{fout}</p>}
+          <p
+            onClick={() => {
+              setToonReset(true);
+              setFout(null);
+            }}
+            style={{ cursor: "pointer", color: "#2E7D32" }}
+          >
+            Wachtwoord vergeten?
+          </p>
+        </>
+      )}
     </div>
   );
 }
