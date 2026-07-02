@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 
 // ── Meerkeuze vraag component ──
-function MeerkeuzVraag({ vraag, antwoorden, onChange, gecontroleerd }) {
+function MeerkeuzVraag({
+  vraag,
+  antwoorden,
+  onChange,
+  gecontroleerd,
+  onToonAntwoord,
+  heeftAntwoordGezien,
+}) {
   const [geselecteerd, setGeselecteerd] = useState([]);
   const meerdere = vraag.meerdere_correct;
 
@@ -20,13 +27,22 @@ function MeerkeuzVraag({ vraag, antwoorden, onChange, gecontroleerd }) {
     onChange(nieuweSelectie);
   }
 
+  const [toonAntwoord, setToonAntwoord] = useState(false);
+
   function getStatus(antwoord) {
     if (!gecontroleerd)
       return geselecteerd.includes(antwoord.id) ? "selected" : "idle";
     const isGeselecteerd = geselecteerd.includes(antwoord.id);
-    if (antwoord.is_correct && isGeselecteerd) return "correct";
-    if (antwoord.is_correct && !isGeselecteerd) return "gemist";
-    if (!antwoord.is_correct && isGeselecteerd) return "fout";
+    if (toonAntwoord) {
+      if (antwoord.is_correct && isGeselecteerd) return "correct";
+      if (antwoord.is_correct && !isGeselecteerd) return "gemist";
+      if (!antwoord.is_correct && isGeselecteerd) return "fout";
+      return "idle";
+    }
+    // Zonder toonAntwoord: alleen geselecteerde markeren als fout/correct
+    if (isGeselecteerd) {
+      return antwoord.is_correct ? "correct" : "fout";
+    }
     return "idle";
   }
 
@@ -145,12 +161,78 @@ function MeerkeuzVraag({ vraag, antwoorden, onChange, gecontroleerd }) {
             </div>
           );
         })}
+      {/* Feedback na controleren */}
+      {gecontroleerd &&
+        (() => {
+          const alleCorrect =
+            vraag.antwoorden
+              .filter((a) => a.is_correct)
+              .every((a) => geselecteerd.includes(a.id)) &&
+            geselecteerd.every(
+              (id) => vraag.antwoorden.find((a) => a.id === id)?.is_correct,
+            );
+          return (
+            <div
+              style={{
+                marginTop: "10px",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                fontSize: "13px",
+                fontWeight: 500,
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                background: alleCorrect ? "#E8F5E9" : "#FFEBEE",
+                color: alleCorrect ? "#2E7D32" : "#C62828",
+                border: `1px solid ${alleCorrect ? "#A5D6A7" : "#EF9A9A"}`,
+              }}
+            >
+              <span>{alleCorrect ? "✓" : "✕"}</span>
+              <span>
+                {alleCorrect
+                  ? "Correct!"
+                  : "Niet correct. Probeer opnieuw of toon het antwoord."}
+              </span>
+              {!alleCorrect && !toonAntwoord && (
+                <button
+                  onClick={() => {
+                    if (heeftAntwoordGezien) {
+                      setToonAntwoord(true);
+                    } else {
+                      onToonAntwoord(() => setToonAntwoord(true));
+                    }
+                  }}
+                  style={{
+                    marginLeft: "auto",
+                    background: "#fff8e1",
+                    color: "#e65100",
+                    border: "1px solid #ffd54f",
+                    borderRadius: "100px",
+                    padding: "3px 12px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "Inter, sans-serif",
+                  }}
+                >
+                  Toon Antwoord
+                </button>
+              )}
+            </div>
+          );
+        })()}
     </div>
   );
 }
 
 // ── Open vraag component ──
-function OpenVraag({ vraag, onChange, gecontroleerd }) {
+function OpenVraag({
+  vraag,
+  onChange,
+  gecontroleerd,
+  onToonAntwoord,
+  heeftAntwoordGezien,
+}) {
   const [waarde, setWaarde] = useState("");
   const [toonAntwoord, setToonAntwoord] = useState(false);
 
@@ -234,7 +316,13 @@ function OpenVraag({ vraag, onChange, gecontroleerd }) {
           </span>
           {!isCorrect && !toonAntwoord && (
             <button
-              onClick={() => setToonAntwoord(true)}
+              onClick={() => {
+                if (heeftAntwoordGezien) {
+                  setToonAntwoord(true);
+                } else {
+                  onToonAntwoord(() => setToonAntwoord(true));
+                }
+              }}
               style={{
                 marginLeft: "auto",
                 background: "#fff8e1",
@@ -296,6 +384,11 @@ export default function QuizContainer() {
   const [opgeslagen, setOpgeslagen] = useState(false);
   const [score, setScore] = useState(null);
   const [resetTeller, setResetTeller] = useState(0);
+  const [heeftAntwoordGezien, setHeeftAntwoordGezien] = useState(false);
+  const [toonWaarschuwing, setToonWaarschuwing] = useState(false);
+  const [waarschuwingNietMeerTonen, setWaarschuwingNietMeerTonen] =
+    useState(false);
+  const [pendingCallback, setPendingCallback] = useState(null);
 
   const params = new URLSearchParams(window.location.search);
   const quizId = params.get("id");
@@ -370,7 +463,7 @@ export default function QuizContainer() {
     setGecontroleerd(true);
     setOpgeslagen(true);
 
-    if (email && scorePercentage !== null) {
+    if (email && scorePercentage !== null && !heeftAntwoordGezien) {
       slaScoreOp(scorePercentage);
     }
   }
@@ -522,11 +615,11 @@ export default function QuizContainer() {
   } // ← sluit berekeningVoortgang
 
   function reset() {
-    // ← nu buiten de functie
     setAntwoorden({});
     setGecontroleerd(false);
     setOpgeslagen(false);
     setScore(null);
+    setHeeftAntwoordGezien(false);
     setResetTeller((prev) => prev + 1);
   }
 
@@ -570,6 +663,122 @@ export default function QuizContainer() {
         fontFamily: "Inter, sans-serif",
       }}
     >
+      {/* Waarschuwing popup */}
+      {toonWaarschuwing && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: "12px",
+              padding: "28px",
+              width: "420px",
+              boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                marginBottom: "12px",
+              }}
+            >
+              <svg width="22" height="22" viewBox="0 0 256 256" fill="#E65100">
+                <path d="M236.8,188.09,149.35,36.22a24.76,24.76,0,0,0-42.7,0L19.2,188.09a23.51,23.51,0,0,0,0,23.72A24.35,24.35,0,0,0,40.55,224h174.9a24.35,24.35,0,0,0,21.33-12.19A23.51,23.51,0,0,0,236.8,188.09ZM120,104a8,8,0,0,1,16,0v40a8,8,0,0,1-16,0Zm8,88a12,12,0,1,1,12-12A12,12,0,0,1,128,192Z" />
+              </svg>
+              <p
+                style={{ fontWeight: 700, fontSize: "1rem", color: "#1A1A1A" }}
+              >
+                Let op!
+              </p>
+            </div>
+            <p
+              style={{
+                fontSize: "0.88rem",
+                color: "#5F6368",
+                lineHeight: 1.6,
+                marginBottom: "16px",
+              }}
+            >
+              Als je het antwoord bekijkt telt deze vraag{" "}
+              <strong>niet meer mee</strong> voor je score, ook niet als je
+              opnieuw probeert.
+            </p>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "0.82rem",
+                color: "#5F6368",
+                marginBottom: "20px",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={waarschuwingNietMeerTonen}
+                onChange={(e) => setWaarschuwingNietMeerTonen(e.target.checked)}
+              />
+              Ik heb dit begrepen, toon deze melding niet meer
+            </label>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={() => setToonWaarschuwing(false)}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: "50px",
+                  border: "1px solid #DADCE0",
+                  background: "white",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "Inter, sans-serif",
+                  color: "#5F6368",
+                }}
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={() => {
+                  setHeeftAntwoordGezien(true);
+                  setToonWaarschuwing(false);
+                  if (pendingCallback) {
+                    pendingCallback();
+                    setPendingCallback(null);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: "50px",
+                  border: "none",
+                  background: "#E65100",
+                  color: "white",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              >
+                Toon toch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div
         style={{
@@ -752,6 +961,16 @@ export default function QuizContainer() {
                   antwoorden={vraag.antwoorden}
                   onChange={(selectie) => updateAntwoord(vraag.id, selectie)}
                   gecontroleerd={gecontroleerd}
+                  heeftAntwoordGezien={heeftAntwoordGezien}
+                  onToonAntwoord={(callback) => {
+                    if (waarschuwingNietMeerTonen) {
+                      setHeeftAntwoordGezien(true);
+                      callback();
+                    } else {
+                      setToonWaarschuwing(true);
+                      setPendingCallback(() => callback);
+                    }
+                  }}
                 />
               ) : (
                 <OpenVraag
@@ -759,6 +978,17 @@ export default function QuizContainer() {
                   vraag={vraag}
                   onChange={(tekst) => updateAntwoord(vraag.id, tekst)}
                   gecontroleerd={gecontroleerd}
+                  heeftAntwoordGezien={heeftAntwoordGezien}
+                  onToonAntwoord={(callback) => {
+                    if (waarschuwingNietMeerTonen) {
+                      setHeeftAntwoordGezien(true);
+                      callback();
+                    } else {
+                      setToonWaarschuwing(true);
+                      // Sla callback op zodat we hem kunnen aanroepen na bevestiging
+                      setPendingCallback(() => callback);
+                    }
+                  }}
                 />
               )}
             </div>
