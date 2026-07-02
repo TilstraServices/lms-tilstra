@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Start from "./pages/Start";
 import ResetWachtwoord from "./pages/ResetWachtwoord";
 import Competentiematrix from "./pages/competentiematrix/Competentiematrix";
-import Beheer from "./pages/competentiematrix/Beheer";
 import TraineeDashboard from "./pages/dashboard/trainee/Dashboard";
 import LeidinggevendeDashboard from "./pages/dashboard/leidinggevende/Dashboard";
 import BeheerDashboard from "./pages/dashboard/beheer/Dashboard";
@@ -20,7 +19,6 @@ function App() {
       <Routes>
         <Route path="/" element={<Start />} />
         <Route path="/matrix" element={<Competentiematrix rol={rol} />} />
-        <Route path="/beheer" element={<Beheer />} />
         <Route path="/dashboard/trainee" element={<TraineeDashboard />} />
         <Route
           path="/dashboard/leidinggevende"
