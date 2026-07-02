@@ -6,6 +6,11 @@ export default function InstellingenBlok({ email }) {
   const [trainees, setTrainees] = useState([]);
   const [bio, setBio] = useState("");
   const [laden, setLaden] = useState(true);
+  const [bewerkModus, setBewerkModus] = useState(false);
+  const [bewerkNaam, setBewerkNaam] = useState("");
+  const [bewerkEmail, setBewerkEmail] = useState("");
+  const [bewerkBio, setBewerkBio] = useState("");
+  const [opslaan, setOpslaan] = useState(false);
 
   useEffect(() => {
     async function laadData() {
@@ -42,6 +47,23 @@ export default function InstellingenBlok({ email }) {
     }
     laadData();
   }, [email]);
+
+  async function slaProfielOp() {
+    setOpslaan(true);
+    await supabase
+      .from("gebruikers")
+      .update({ naam: bewerkNaam, email: bewerkEmail, bio: bewerkBio })
+      .eq("email", email);
+    setGebruiker((prev) => ({
+      ...prev,
+      naam: bewerkNaam,
+      email: bewerkEmail,
+      bio: bewerkBio,
+    }));
+    setBio(bewerkBio);
+    setBewerkModus(false);
+    setOpslaan(false);
+  }
 
   const initialen = gebruiker?.naam
     ? gebruiker.naam
@@ -92,8 +114,7 @@ export default function InstellingenBlok({ email }) {
             marginTop: "2px",
           }}
         >
-          Jouw profielinformatie — bewerken wordt mogelijk na activatie van
-          authenticatie
+          Jouw profielinformatie — bewerken mogelijk via de knop onderaan
         </p>
       </div>
 
@@ -108,10 +129,40 @@ export default function InstellingenBlok({ email }) {
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <Veld label="Naam">
-            <WaardeVak>{gebruiker?.naam || "—"}</WaardeVak>
+            {bewerkModus ? (
+              <input
+                value={bewerkNaam}
+                onChange={(e) => setBewerkNaam(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--grijs-300)",
+                  fontSize: "0.88rem",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              />
+            ) : (
+              <WaardeVak>{gebruiker?.naam || "—"}</WaardeVak>
+            )}
           </Veld>
           <Veld label="Email">
-            <WaardeVak>{gebruiker?.email || "—"}</WaardeVak>
+            {bewerkModus ? (
+              <input
+                value={bewerkEmail}
+                onChange={(e) => setBewerkEmail(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--grijs-300)",
+                  fontSize: "0.88rem",
+                  fontFamily: "Inter, sans-serif",
+                }}
+              />
+            ) : (
+              <WaardeVak>{gebruiker?.email || "—"}</WaardeVak>
+            )}
           </Veld>
           <Veld label="Account aangemaakt">
             <WaardeVak>{aangemaaktop}</WaardeVak>
@@ -185,21 +236,40 @@ export default function InstellingenBlok({ email }) {
         }}
       >
         <Veld label="Bio">
-          <div
-            style={{
-              width: "100%",
-              minHeight: "100px",
-              background: "#F9F9F9",
-              border: "1px solid #EEEEEE",
-              borderRadius: "8px",
-              padding: "12px 14px",
-              fontSize: "0.85rem",
-              color: bio ? "var(--grijs-900)" : "#BDBDBD",
-              lineHeight: 1.6,
-            }}
-          >
-            {bio || "Nog geen bio ingesteld"}
-          </div>
+          {bewerkModus ? (
+            <textarea
+              value={bewerkBio}
+              onChange={(e) => setBewerkBio(e.target.value)}
+              placeholder="Schrijf iets over jezelf..."
+              style={{
+                width: "100%",
+                minHeight: "100px",
+                padding: "12px 14px",
+                borderRadius: "8px",
+                border: "1px solid var(--grijs-300)",
+                fontSize: "0.85rem",
+                fontFamily: "Inter, sans-serif",
+                resize: "vertical",
+                lineHeight: 1.6,
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: "100%",
+                minHeight: "100px",
+                background: "#F9F9F9",
+                border: "1px solid #EEEEEE",
+                borderRadius: "8px",
+                padding: "12px 14px",
+                fontSize: "0.85rem",
+                color: bio ? "var(--grijs-900)" : "#BDBDBD",
+                lineHeight: 1.6,
+              }}
+            >
+              {bio || "Nog geen bio ingesteld"}
+            </div>
+          )}
         </Veld>
 
         <Veld label="Trainees">
@@ -275,27 +345,51 @@ export default function InstellingenBlok({ email }) {
           borderTop: "1px solid #EEEEEE",
         }}
       >
-        <button
-          disabled
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            background: "#F5F5F5",
-            border: "1px solid #E0E0E0",
-            borderRadius: "50px",
-            padding: "8px 20px",
-            fontSize: "0.82rem",
-            fontWeight: 600,
-            color: "#BDBDBD",
-            cursor: "not-allowed",
-          }}
-        >
-          <svg width="15" height="15" viewBox="0 0 256 256" fill="currentColor">
-            <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z" />
-          </svg>
-          Profiel bewerken
-        </button>
+        {bewerkModus ? (
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={slaProfielOp}
+              disabled={opslaan}
+              className="knop knop-primair"
+              style={{ fontSize: "0.82rem" }}
+            >
+              {opslaan ? "Opslaan..." : "Opslaan"}
+            </button>
+            <button
+              onClick={() => setBewerkModus(false)}
+              className="knop knop-ghost"
+              style={{ fontSize: "0.82rem" }}
+            >
+              Annuleren
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setBewerkNaam(gebruiker?.naam || "");
+              setBewerkEmail(gebruiker?.email || "");
+              setBewerkBio(gebruiker?.bio || "");
+              setBewerkModus(true);
+            }}
+            className="knop knop-ghost"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "0.82rem",
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 256 256"
+              fill="currentColor"
+            >
+              <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z" />
+            </svg>
+            Profiel bewerken
+          </button>
+        )}
       </div>
     </div>
   );

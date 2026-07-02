@@ -569,6 +569,38 @@ function ActiviteitModal({ trainee, onSluit }) {
                   marginBottom: "4px",
                 }}
               >
+                Score
+              </p>
+              <p
+                style={{
+                  fontSize: "0.88rem",
+                  fontWeight: 700,
+                  color:
+                    trainee.activiteit.score >= 70 ? "var(--groen)" : "#C62828",
+                }}
+              >
+                {trainee.activiteit.score !== null &&
+                trainee.activiteit.score !== undefined
+                  ? `${trainee.activiteit.score}%`
+                  : "—"}
+              </p>
+            </div>
+            <div
+              style={{
+                background: "var(--grijs-100)",
+                borderRadius: "8px",
+                padding: "12px 14px",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  color: "var(--grijs-500)",
+                  marginBottom: "4px",
+                }}
+              >
                 Datum
               </p>
               <p
