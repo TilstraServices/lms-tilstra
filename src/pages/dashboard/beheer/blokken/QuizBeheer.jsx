@@ -5,9 +5,7 @@ export default function QuizBeheer({ quiz }) {
   const [vragen, setVragen] = useState([]);
   const [laden, setLaden] = useState(true);
   const [geselecteerdeVraag, setGeselecteerdeVraag] = useState(null);
-  const [toonNieuweVraag, setToonNieuweVraag] = useState(false);
-  const [nieuweVraagTekst, setNieuweVraagTekst] = useState("");
-  const [nieuweVraagType, setNieuweVraagType] = useState("meerkeuze");
+  const [nieuweVraagLaden, setNieuweVraagLaden] = useState(false);
 
   useEffect(() => {
     async function haalVragenOp() {
@@ -32,42 +30,30 @@ export default function QuizBeheer({ quiz }) {
   }
 
   async function voegVraagToe() {
-    if (!nieuweVraagTekst.trim()) return;
+    setNieuweVraagLaden(true);
     const { data } = await supabase
       .from("vragen")
       .insert({
-        vraag: nieuweVraagTekst,
-        type: nieuweVraagType,
+        vraag: "",
+        type: "meerkeuze",
         quiz_id: quiz.id,
         volgorde: vragen.length,
+        meerdere_correct: false,
       })
       .select()
       .single();
 
-    if (data && nieuweVraagType === "meerkeuze") {
-      // Voeg standaard 4 lege antwoorden toe
+    if (data) {
       await supabase.from("antwoorden").insert([
         { vraag_id: data.id, tekst: "", is_correct: true, volgorde: 0 },
         { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 1 },
         { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 2 },
         { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 3 },
       ]);
+      await herlaadVragen();
+      setGeselecteerdeVraag(data.id);
     }
-
-    if (data && nieuweVraagType === "open") {
-      // Voeg modelantwoord toe
-      await supabase.from("antwoorden").insert({
-        vraag_id: data.id,
-        tekst: "",
-        is_correct: true,
-        volgorde: 0,
-      });
-    }
-
-    setNieuweVraagTekst("");
-    setToonNieuweVraag(false);
-    await herlaadVragen();
-    setGeselecteerdeVraag(data?.id || null);
+    setNieuweVraagLaden(false);
   }
 
   async function verwijderVraag(id) {
@@ -178,98 +164,14 @@ export default function QuizBeheer({ quiz }) {
           ))}
         </div>
 
-        {toonNieuweVraag ? (
-          <div
-            className="uitklap-animatie"
-            style={{
-              background: "var(--grijs-50)",
-              border: "1px solid var(--grijs-200)",
-              borderRadius: "6px",
-              padding: "10px",
-            }}
-          >
-            <textarea
-              placeholder="Vraag tekst..."
-              value={nieuweVraagTekst}
-              onChange={(e) => setNieuweVraagTekst(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "7px 10px",
-                borderRadius: "6px",
-                border: "1px solid var(--grijs-200)",
-                marginBottom: "8px",
-                fontFamily: "Inter, sans-serif",
-                fontSize: "0.82rem",
-                resize: "vertical",
-                minHeight: "60px",
-              }}
-            />
-            <div style={{ display: "flex", gap: "6px", marginBottom: "8px" }}>
-              <button
-                onClick={() => setNieuweVraagType("meerkeuze")}
-                style={{
-                  flex: 1,
-                  padding: "5px",
-                  borderRadius: "6px",
-                  border: "1px solid var(--grijs-200)",
-                  cursor: "pointer",
-                  fontSize: "0.75rem",
-                  background:
-                    nieuweVraagType === "meerkeuze" ? "var(--groen)" : "white",
-                  color:
-                    nieuweVraagType === "meerkeuze"
-                      ? "white"
-                      : "var(--grijs-700)",
-                  fontFamily: "Inter, sans-serif",
-                }}
-              >
-                Meerkeuze
-              </button>
-              <button
-                onClick={() => setNieuweVraagType("open")}
-                style={{
-                  flex: 1,
-                  padding: "5px",
-                  borderRadius: "6px",
-                  border: "1px solid var(--grijs-200)",
-                  cursor: "pointer",
-                  fontSize: "0.75rem",
-                  background:
-                    nieuweVraagType === "open" ? "var(--groen)" : "white",
-                  color:
-                    nieuweVraagType === "open" ? "white" : "var(--grijs-700)",
-                  fontFamily: "Inter, sans-serif",
-                }}
-              >
-                Open
-              </button>
-            </div>
-            <div style={{ display: "flex", gap: "6px" }}>
-              <button
-                className="knop knop-primair"
-                style={{ fontSize: "0.75rem", padding: "5px 10px", flex: 1 }}
-                onClick={voegVraagToe}
-              >
-                Toevoegen
-              </button>
-              <button
-                className="knop knop-ghost"
-                style={{ fontSize: "0.75rem", padding: "5px 10px" }}
-                onClick={() => setToonNieuweVraag(false)}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            className="knop knop-secundair"
-            style={{ fontSize: "0.78rem", padding: "6px 12px", width: "100%" }}
-            onClick={() => setToonNieuweVraag(true)}
-          >
-            + Nieuwe vraag
-          </button>
-        )}
+        <button
+          className="knop knop-secundair"
+          style={{ fontSize: "0.78rem", padding: "6px 12px", width: "100%" }}
+          onClick={voegVraagToe}
+          disabled={nieuweVraagLaden}
+        >
+          {nieuweVraagLaden ? "Aanmaken..." : "+ Nieuwe vraag"}
+        </button>
       </div>
 
       {/* Rechterkant — vraag bewerken */}
@@ -378,15 +280,98 @@ function VraagBewerken({ vraag, onHerlaad, onVerwijder }) {
           marginBottom: "12px",
         }}
       >
-        <p
-          style={{
-            fontSize: "0.82rem",
-            fontWeight: 600,
-            color: "var(--grijs-700)",
-          }}
-        >
-          {vraag.type === "meerkeuze" ? "Meerkeuzevraag" : "Open vraag"}
-        </p>
+        <div style={{ display: "flex", gap: "6px" }}>
+          <button
+            onClick={async () => {
+              if (vraag.type === "meerkeuze") return;
+              await supabase
+                .from("vragen")
+                .update({ type: "meerkeuze" })
+                .eq("id", vraag.id);
+              await supabase
+                .from("antwoorden")
+                .delete()
+                .eq("vraag_id", vraag.id);
+              await supabase.from("antwoorden").insert([
+                {
+                  vraag_id: vraag.id,
+                  tekst: "",
+                  is_correct: true,
+                  volgorde: 0,
+                },
+                {
+                  vraag_id: vraag.id,
+                  tekst: "",
+                  is_correct: false,
+                  volgorde: 1,
+                },
+                {
+                  vraag_id: vraag.id,
+                  tekst: "",
+                  is_correct: false,
+                  volgorde: 2,
+                },
+                {
+                  vraag_id: vraag.id,
+                  tekst: "",
+                  is_correct: false,
+                  volgorde: 3,
+                },
+              ]);
+              onHerlaad();
+            }}
+            style={{
+              padding: "4px 12px",
+              borderRadius: "50px",
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "Inter, sans-serif",
+              border: "none",
+              background:
+                vraag.type === "meerkeuze"
+                  ? "var(--groen)"
+                  : "var(--grijs-200)",
+              color: vraag.type === "meerkeuze" ? "white" : "var(--grijs-700)",
+            }}
+          >
+            Meerkeuze
+          </button>
+          <button
+            onClick={async () => {
+              if (vraag.type === "open") return;
+              await supabase
+                .from("vragen")
+                .update({ type: "open" })
+                .eq("id", vraag.id);
+              await supabase
+                .from("antwoorden")
+                .delete()
+                .eq("vraag_id", vraag.id);
+              await supabase.from("antwoorden").insert({
+                vraag_id: vraag.id,
+                tekst: "",
+                is_correct: true,
+                volgorde: 0,
+              });
+              onHerlaad();
+            }}
+            style={{
+              padding: "4px 12px",
+              borderRadius: "50px",
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "Inter, sans-serif",
+              border: "none",
+              background:
+                vraag.type === "open" ? "var(--groen)" : "var(--grijs-200)",
+              color: vraag.type === "open" ? "white" : "var(--grijs-700)",
+            }}
+          >
+            Open
+          </button>
+        </div>
         <button
           onClick={onVerwijder}
           style={{

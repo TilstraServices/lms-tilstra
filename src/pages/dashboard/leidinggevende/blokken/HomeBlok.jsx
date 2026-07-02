@@ -541,7 +541,7 @@ function ActiviteitModal({ trainee, onSluit }) {
                   marginBottom: "4px",
                 }}
               >
-                Paragraaf
+                Paragraaf / Quiz
               </p>
               <p
                 style={{
@@ -633,6 +633,7 @@ export default function HomeBlok({ email }) {
         evaluatiesRes,
         bevestigingenRes,
         activiteitRes,
+        quizScoresRes,
       ] = await Promise.all([
         supabase
           .from("gebruikers")
@@ -656,6 +657,13 @@ export default function HomeBlok({ email }) {
           .select("evaluatie_id")
           .in("trainee_email", traineeEmails),
         supabase.rpc("laatste_activiteit", { trainee_emails: traineeEmails }),
+        supabase
+          .from("quiz_scores")
+          .select(
+            "trainee_email, quiz_id, score, poging_nummer, quizen(hoofdstuk_id, hoofdstukken(module_id))",
+          )
+          .in("trainee_email", traineeEmails)
+          .order("poging_nummer", { ascending: false }),
       ]);
 
       const moduleMap = {};
@@ -702,6 +710,35 @@ export default function HomeBlok({ email }) {
         activiteitPerTrainee[a.trainee_email] = a;
       });
 
+      // Quiz gem score per trainee (meest recente module)
+      const laasteQuizScoresMap = {};
+      (quizScoresRes.data || []).forEach((s) => {
+        if (!laasteQuizScoresMap[s.quiz_id]) laasteQuizScoresMap[s.quiz_id] = s;
+      });
+
+      const quizScoresPerTrainee = {};
+      Object.values(laasteQuizScoresMap).forEach((s) => {
+        const moduleId = s.quizen?.hoofdstukken?.module_id;
+        if (!moduleId) return;
+        const email = s.trainee_email;
+        if (!quizScoresPerTrainee[email]) quizScoresPerTrainee[email] = {};
+        if (!quizScoresPerTrainee[email][moduleId])
+          quizScoresPerTrainee[email][moduleId] = [];
+        quizScoresPerTrainee[email][moduleId].push(s.score);
+      });
+
+      // Bereken gem quiz score per trainee voor actieve module
+      const quizGemPerTrainee = {};
+      Object.entries(quizScoresPerTrainee).forEach(([email, modules]) => {
+        const actieveModuleId = voortgangPerTrainee[email]?.module_id;
+        if (actieveModuleId && modules[actieveModuleId]) {
+          const scores = modules[actieveModuleId];
+          quizGemPerTrainee[email] = Math.round(
+            scores.reduce((a, b) => a + b, 0) / scores.length,
+          );
+        }
+      });
+
       const afgerond = (voortgangRes.data || []).filter(
         (v) => v.voortgang >= 100,
       ).length;
@@ -716,6 +753,7 @@ export default function HomeBlok({ email }) {
         naam: g.naam,
         email: g.email,
         actieveModule: voortgangPerTrainee[g.email] || null,
+        quizGemScore: quizGemPerTrainee[g.email] ?? null,
         evaluatie: evaluatiePerTrainee[g.email]?.[0] || null,
         evaluatieGeschiedenis: evaluatiePerTrainee[g.email] || [],
         bevestigingen:
@@ -872,7 +910,8 @@ export default function HomeBlok({ email }) {
                   <th style={{ paddingLeft: "24px" }}>Naam</th>
                   <th>Actieve module</th>
                   <th>Voortgang</th>
-                  <th>Gem. score</th>
+                  <th>Opgave score</th>
+                  <th>Quiz score</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -999,6 +1038,25 @@ export default function HomeBlok({ email }) {
                             }}
                           >
                             {m.gem_score}%
+                          </span>
+                        ) : (
+                          <span style={{ color: "var(--grijs-500)" }}>—</span>
+                        )}
+                      </td>
+                      <td>
+                        {trainee.quizGemScore !== null &&
+                        trainee.quizGemScore !== undefined ? (
+                          <span
+                            style={{
+                              fontWeight: 700,
+                              fontSize: "0.88rem",
+                              color:
+                                trainee.quizGemScore >= 70
+                                  ? "var(--groen)"
+                                  : "#C62828",
+                            }}
+                          >
+                            {trainee.quizGemScore}%
                           </span>
                         ) : (
                           <span style={{ color: "var(--grijs-500)" }}>—</span>

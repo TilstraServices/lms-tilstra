@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../../lib/supabase";
+import { ParagraafIcoon, VraagIcoon } from "../../../../assets/icons.jsx";
 
 const MODULE_KLEUREN = {
   BKL: { primair: "#2E7D32", licht: "#E8F5E9", label: "BKL" },
@@ -239,6 +240,7 @@ function ModuleRij({
   module,
   voortgang,
   score,
+  quizScore,
   actief,
   open,
   onToggle,
@@ -354,32 +356,39 @@ function ModuleRij({
         ) : (
           <div style={{ width: "100px", flexShrink: 0 }} />
         )}
-        {actief && score !== null && score !== undefined ? (
-          <p
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              color: score >= 70 ? "#2E7D32" : "#C62828",
-              width: "50px",
-              textAlign: "right",
-              flexShrink: 0,
-            }}
-          >
-            {score}%
-          </p>
-        ) : (
-          <p
-            style={{
-              fontSize: "0.85rem",
-              color: "var(--grijs-300)",
-              width: "50px",
-              textAlign: "right",
-              flexShrink: 0,
-            }}
-          >
-            —
-          </p>
-        )}
+        <div style={{ width: "110px", flexShrink: 0, textAlign: "right" }}>
+          {actief && score !== null && score !== undefined && (
+            <p
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                color: score >= 70 ? "#2E7D32" : "#C62828",
+              }}
+            >
+              <ParagraafIcoon size={12} /> {score}%
+            </p>
+          )}
+          {actief && quizScore !== null && quizScore !== undefined && (
+            <p
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                color: quizScore >= 70 ? "#2E7D32" : "#C62828",
+              }}
+            >
+              <VraagIcoon size={12} /> {quizScore}%
+            </p>
+          )}
+          {actief &&
+            score === null &&
+            score === undefined &&
+            quizScore === null &&
+            quizScore === undefined && (
+              <p style={{ fontSize: "0.85rem", color: "var(--grijs-300)" }}>
+                —
+              </p>
+            )}
+        </div>
         {actief ? (
           <span
             style={{
@@ -548,27 +557,39 @@ function ModuleRij({
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
                 color: "var(--grijs-500)",
-                marginBottom: "4px",
+                marginBottom: "8px",
               }}
             >
               Gem. score
             </p>
-            <p
-              style={{
-                fontSize: "1rem",
-                fontWeight: 700,
-                color:
-                  actief && score !== null
-                    ? score >= 70
-                      ? "#2E7D32"
-                      : "#C62828"
-                    : "var(--grijs-300)",
-              }}
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
             >
-              {actief && score !== null && score !== undefined
-                ? `${score}%`
-                : "—"}
-            </p>
+              <p style={{ fontSize: "0.82rem", color: "var(--grijs-500)" }}>
+                <ParagraafIcoon size={13} />{" "}
+                {actief && score !== null && score !== undefined ? (
+                  <strong
+                    style={{ color: score >= 70 ? "#2E7D32" : "#C62828" }}
+                  >
+                    {score}%
+                  </strong>
+                ) : (
+                  "—"
+                )}
+              </p>
+              <p style={{ fontSize: "0.82rem", color: "var(--grijs-500)" }}>
+                <VraagIcoon size={13} />{" "}
+                {actief && quizScore !== null && quizScore !== undefined ? (
+                  <strong
+                    style={{ color: quizScore >= 70 ? "#2E7D32" : "#C62828" }}
+                  >
+                    {quizScore}%
+                  </strong>
+                ) : (
+                  "—"
+                )}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -637,6 +658,7 @@ export default function VoortgangBlok({ email }) {
   const [alleModules, setAlleModules] = useState([]);
   const [voortgangMap, setVoortgangMap] = useState({});
   const [scoreMap, setScoreMap] = useState({});
+  const [quizScoreMap, setQuizScoreMap] = useState({});
   const [openMijnModule, setOpenMijnModule] = useState(null);
   const [openAlleModule, setOpenAlleModule] = useState(null);
   const [laden, setLaden] = useState(true);
@@ -713,6 +735,37 @@ export default function VoortgangBlok({ email }) {
       });
 
       setScoreMap(sMap);
+
+      // Quiz scores per module
+      const { data: quizScoreData } = await supabase
+        .from("quiz_scores")
+        .select(
+          "quiz_id, score, poging_nummer, quizen(hoofdstuk_id, hoofdstukken(module_id))",
+        )
+        .eq("trainee_email", email)
+        .order("poging_nummer", { ascending: false });
+
+      const laasteQuizScoresMap = {};
+      (quizScoreData || []).forEach((s) => {
+        if (!laasteQuizScoresMap[s.quiz_id]) laasteQuizScoresMap[s.quiz_id] = s;
+      });
+
+      const qMap = {};
+      Object.values(laasteQuizScoresMap).forEach((s) => {
+        const moduleId = s.quizen?.hoofdstukken?.module_id;
+        if (!moduleId || !activeModuleIds.includes(moduleId)) return;
+        if (!qMap[moduleId]) qMap[moduleId] = [];
+        qMap[moduleId].push(s.score);
+      });
+
+      Object.keys(qMap).forEach((moduleId) => {
+        const scores = qMap[moduleId];
+        qMap[moduleId] = Math.round(
+          scores.reduce((a, b) => a + b, 0) / scores.length,
+        );
+      });
+
+      setQuizScoreMap(qMap);
     }
 
     setLaden(false);
@@ -878,6 +931,7 @@ export default function VoortgangBlok({ email }) {
                 module={module}
                 voortgang={voortgangMap[module.id]}
                 score={scoreMap[module.id]}
+                quizScore={quizScoreMap[module.id]}
                 actief={true}
                 open={openMijnModule === module.id}
                 onToggle={() =>
@@ -956,6 +1010,7 @@ export default function VoortgangBlok({ email }) {
                     module={module}
                     voortgang={voortgangMap[module.id]}
                     score={scoreMap[module.id]}
+                    quizScore={quizScoreMap[module.id]}
                     actief={activeModuleIds.includes(module.id)}
                     open={openAlleModule === module.id}
                     onToggle={() =>

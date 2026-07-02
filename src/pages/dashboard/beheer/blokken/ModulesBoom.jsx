@@ -931,13 +931,15 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
             geselecteerd={geselecteerd}
             autoOpen={geselecteerd?.formulierOpen}
             data={data}
-            onHerlaad={() => {
+            onHerlaad={(tabel) => {
               const tabelMap = {
                 module: "hoofdstukken",
                 hoofdstuk: "paragrafen",
                 paragraaf: "opgaves",
               };
-              onHerlaad(tabelMap[geselecteerd.type] || geselecteerd.tabel);
+              onHerlaad(
+                tabel || tabelMap[geselecteerd.type] || geselecteerd.tabel,
+              );
             }}
           />
           {geselecteerd.type === "paragraaf" && (
@@ -1117,7 +1119,7 @@ function NieuwItemFormulier({ geselecteerd, onHerlaad, autoOpen, data }) {
     setNaam("");
     setType("");
     setToonFormulier(false);
-    onHerlaad();
+    onHerlaad(tabel);
   }
 
   return (
