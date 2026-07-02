@@ -5,16 +5,8 @@ const ROL_OPTIES = ["trainee", "leidinggevende", "beheerder"];
 const PAD_OPTIES = ["payroll", "finance", "hr"];
 const PAD_LABELS = { payroll: "Payroll", finance: "Finance", hr: "HR" };
 
-function GebruikerRij({ gebruiker, onOpslaan, onVerwijder, kanVerwijderen }) {
-  const [bewerken, setBewerken] = useState(false);
-  const [naam, setNaam] = useState(gebruiker.naam);
-  const [email, setEmail] = useState(gebruiker.email);
-  const [rol, setRol] = useState(gebruiker.rol);
-
-  async function opslaan() {
-    await onOpslaan(gebruiker.email, { naam, email, rol });
-    setBewerken(false);
-  }
+function GebruikerRij({ gebruiker, onOpslaan, onVerwijder }) {
+  const [toonPopup, setToonPopup] = useState(false);
 
   const initialen = gebruiker.naam
     .split(" ")
@@ -23,52 +15,41 @@ function GebruikerRij({ gebruiker, onOpslaan, onVerwijder, kanVerwijderen }) {
     .join("")
     .toUpperCase();
 
-  if (bewerken) {
-    return (
-      <tr style={{ background: "#FFFDE7" }}>
+  return (
+    <>
+      <tr
+        onClick={() => setToonPopup(true)}
+        style={{ cursor: "pointer" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "var(--grijs-50)")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+      >
         <td style={{ paddingLeft: "24px" }}>
-          <input
-            value={naam}
-            onChange={(e) => setNaam(e.target.value)}
-            style={{
-              fontSize: "0.85rem",
-              border: "1px solid var(--grijs-300)",
-              borderRadius: "6px",
-              padding: "4px 8px",
-              width: "160px",
-            }}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              className="avatar"
+              style={{
+                background: "var(--groen-licht)",
+                color: "var(--groen-donker)",
+              }}
+            >
+              {initialen}
+            </div>
+            <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>
+              {gebruiker.naam}
+            </p>
+          </div>
+        </td>
+        <td style={{ fontSize: "0.85rem", color: "var(--grijs-700)" }}>
+          {gebruiker.email}
         </td>
         <td>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              fontSize: "0.85rem",
-              border: "1px solid var(--grijs-300)",
-              borderRadius: "6px",
-              padding: "4px 8px",
-              width: "200px",
-            }}
-          />
-        </td>
-        <td>
-          <select
-            value={rol}
-            onChange={(e) => setRol(e.target.value)}
-            style={{
-              fontSize: "0.85rem",
-              border: "1px solid var(--grijs-300)",
-              borderRadius: "6px",
-              padding: "4px 8px",
-            }}
+          <span
+            className={`badge ${gebruiker.rol === "trainee" ? "badge-groen" : gebruiker.rol === "leidinggevende" ? "badge-blauw" : "badge-oranje"}`}
           >
-            {ROL_OPTIES.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
+            {gebruiker.rol}
+          </span>
         </td>
         <td style={{ fontSize: "0.82rem", color: "var(--grijs-500)" }}>
           {new Date(gebruiker.aangemaakt_op).toLocaleDateString("nl-NL", {
@@ -77,98 +58,232 @@ function GebruikerRij({ gebruiker, onOpslaan, onVerwijder, kanVerwijderen }) {
             year: "numeric",
           })}
         </td>
-        <td>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={opslaan}
-              className="knop knop-primair"
-              style={{ fontSize: "0.75rem", padding: "4px 12px" }}
-            >
-              Opslaan
-            </button>
-            <button
-              onClick={() => setBewerken(false)}
-              className="knop knop-ghost"
-              style={{ fontSize: "0.75rem", padding: "4px 12px" }}
-            >
-              Annuleren
-            </button>
-          </div>
-        </td>
       </tr>
-    );
+
+      {toonPopup && (
+        <GebruikerPopup
+          gebruiker={gebruiker}
+          onOpslaan={async (data) => {
+            await onOpslaan(gebruiker.email, data);
+            setToonPopup(false);
+          }}
+          onVerwijder={async () => {
+            await onVerwijder(gebruiker.email);
+            setToonPopup(false);
+          }}
+          onSluit={() => setToonPopup(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function GebruikerPopup({ gebruiker, onOpslaan, onVerwijder, onSluit }) {
+  const [naam, setNaam] = useState(gebruiker.naam);
+  const [email, setEmail] = useState(gebruiker.email);
+  const [rol, setRol] = useState(gebruiker.rol);
+  const [toonVerwijderBevestiging, setToonVerwijderBevestiging] =
+    useState(false);
+  const [laden, setLaden] = useState(false);
+
+  async function opslaan() {
+    setLaden(true);
+    await onOpslaan({ naam, email, rol });
+    setLaden(false);
   }
 
   return (
-    <tr>
-      <td style={{ paddingLeft: "24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            className="avatar"
-            style={{
-              background: "var(--groen-licht)",
-              color: "var(--groen-donker)",
-            }}
-          >
-            {initialen}
-          </div>
-          <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>
-            {gebruiker.naam}
-          </p>
-        </div>
-      </td>
-      <td style={{ fontSize: "0.85rem", color: "var(--grijs-700)" }}>
-        {gebruiker.email}
-      </td>
-      <td>
-        <span
-          className={`badge ${gebruiker.rol === "trainee" ? "badge-groen" : gebruiker.rol === "leidinggevende" ? "badge-blauw" : "badge-oranje"}`}
-        >
-          {gebruiker.rol}
-        </span>
-      </td>
-      <td style={{ fontSize: "0.82rem", color: "var(--grijs-500)" }}>
-        {new Date(gebruiker.aangemaakt_op).toLocaleDateString("nl-NL", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })}
-      </td>
-      <td>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button
-            onClick={() => setBewerken(true)}
-            className="knop knop-ghost"
-            style={{ padding: "4px 8px" }}
-          >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 256 256"
-              fill="currentColor"
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+      onClick={onSluit}
+    >
+      <div
+        style={{
+          background: "white",
+          borderRadius: "12px",
+          padding: "28px",
+          width: "420px",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {toonVerwijderBevestiging ? (
+          <>
+            <p
+              style={{
+                fontSize: "1rem",
+                fontWeight: 700,
+                color: "var(--grijs-900)",
+                marginBottom: "8px",
+              }}
             >
-              <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z" />
-            </svg>
-          </button>
-          {kanVerwijderen && (
-            <button
-              onClick={() => onVerwijder(gebruiker.email)}
-              className="knop knop-gevaar"
-              style={{ padding: "4px 8px" }}
+              Gebruiker verwijderen?
+            </p>
+            <p
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--grijs-500)",
+                marginBottom: "24px",
+              }}
             >
-              <svg
-                width="15"
-                height="15"
-                viewBox="0 0 256 256"
-                fill="currentColor"
+              Weet je zeker dat je <strong>{gebruiker.naam}</strong> wilt
+              verwijderen? Dit kan niet ongedaan worden gemaakt.
+            </p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={onVerwijder}
+                className="knop knop-gevaar"
+                style={{ fontSize: "0.82rem" }}
               >
-                <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
+                Ja, verwijderen
+              </button>
+              <button
+                onClick={() => setToonVerwijderBevestiging(false)}
+                className="knop knop-ghost"
+                style={{ fontSize: "0.82rem" }}
+              >
+                Annuleren
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p
+              style={{
+                fontSize: "1rem",
+                fontWeight: 700,
+                color: "var(--grijs-900)",
+                marginBottom: "20px",
+              }}
+            >
+              Gebruiker bewerken
+            </p>
+
+            <label
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color: "var(--grijs-500)",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Naam
+            </label>
+            <input
+              value={naam}
+              onChange={(e) => setNaam(e.target.value)}
+              style={{
+                width: "100%",
+                fontSize: "0.85rem",
+                border: "1px solid var(--grijs-300)",
+                borderRadius: "6px",
+                padding: "7px 10px",
+                marginBottom: "12px",
+              }}
+            />
+
+            <label
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color: "var(--grijs-500)",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Email
+            </label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: "100%",
+                fontSize: "0.85rem",
+                border: "1px solid var(--grijs-300)",
+                borderRadius: "6px",
+                padding: "7px 10px",
+                marginBottom: "12px",
+              }}
+            />
+
+            <label
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color: "var(--grijs-500)",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Rol
+            </label>
+            <select
+              value={rol}
+              onChange={(e) => setRol(e.target.value)}
+              style={{
+                width: "100%",
+                fontSize: "0.85rem",
+                border: "1px solid var(--grijs-300)",
+                borderRadius: "6px",
+                padding: "7px 10px",
+                marginBottom: "20px",
+              }}
+            >
+              {ROL_OPTIES.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                justifyContent: "space-between",
+              }}
+            >
+              <button
+                onClick={() => setToonVerwijderBevestiging(true)}
+                className="knop knop-gevaar"
+                style={{ fontSize: "0.82rem" }}
+              >
+                Verwijderen
+              </button>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={onSluit}
+                  className="knop knop-ghost"
+                  style={{ fontSize: "0.82rem" }}
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={opslaan}
+                  disabled={laden}
+                  className="knop knop-primair"
+                  style={{ fontSize: "0.82rem" }}
+                >
+                  {laden ? "Opslaan..." : "Opslaan"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -406,78 +521,7 @@ function KoppelingRij({
   onOpslaan,
   onVerwijder,
 }) {
-  const [bewerken, setBewerken] = useState(false);
-  const [traineeEmail, setTraineeEmail] = useState(koppeling.trainee_email);
-  const [lgEmail, setLgEmail] = useState(koppeling.leidinggevende_email);
-
-  async function opslaan() {
-    await onOpslaan(koppeling, {
-      trainee_email: traineeEmail,
-      leidinggevende_email: lgEmail,
-    });
-    setBewerken(false);
-  }
-
-  if (bewerken) {
-    return (
-      <tr style={{ background: "#FFFDE7" }}>
-        <td style={{ paddingLeft: "24px" }}>
-          <select
-            value={traineeEmail}
-            onChange={(e) => setTraineeEmail(e.target.value)}
-            style={{
-              fontSize: "0.85rem",
-              border: "1px solid var(--grijs-300)",
-              borderRadius: "6px",
-              padding: "4px 8px",
-            }}
-          >
-            {trainees.map((t) => (
-              <option key={t.email} value={t.email}>
-                {t.naam}
-              </option>
-            ))}
-          </select>
-        </td>
-        <td>
-          <select
-            value={lgEmail}
-            onChange={(e) => setLgEmail(e.target.value)}
-            style={{
-              fontSize: "0.85rem",
-              border: "1px solid var(--grijs-300)",
-              borderRadius: "6px",
-              padding: "4px 8px",
-            }}
-          >
-            {leidinggevenden.map((l) => (
-              <option key={l.email} value={l.email}>
-                {l.naam}
-              </option>
-            ))}
-          </select>
-        </td>
-        <td>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              onClick={opslaan}
-              className="knop knop-primair"
-              style={{ fontSize: "0.75rem", padding: "4px 12px" }}
-            >
-              Opslaan
-            </button>
-            <button
-              onClick={() => setBewerken(false)}
-              className="knop knop-ghost"
-              style={{ fontSize: "0.75rem", padding: "4px 12px" }}
-            >
-              Annuleren
-            </button>
-          </div>
-        </td>
-      </tr>
-    );
-  }
+  const [toonPopup, setToonPopup] = useState(false);
 
   const traineeNaam =
     trainees.find((t) => t.email === koppeling.trainee_email)?.naam ||
@@ -487,71 +531,264 @@ function KoppelingRij({
       ?.naam || koppeling.leidinggevende_email;
 
   return (
-    <tr>
-      <td style={{ paddingLeft: "24px", textAlign: "center" }}>
-        <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>{traineeNaam}</p>
-        <p style={{ fontSize: "0.72rem", color: "var(--grijs-500)" }}>
-          {koppeling.trainee_email}
-        </p>
-      </td>
-      <td style={{ width: "120px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div
-            style={{ flex: 1, height: "1px", background: "var(--grijs-300)" }}
-          />
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 256 256"
-            fill="var(--grijs-400)"
-          >
-            <path d="M240,88.23a54.43,54.43,0,0,1-16,37L189.25,160a54.27,54.27,0,0,1-38.63,16h-.05A54.63,54.63,0,0,1,96,119.84a8,8,0,0,1,16,.45A38.62,38.62,0,0,0,150.58,160h0a38.39,38.39,0,0,0,27.31-11.31l34.75-34.75a38.63,38.63,0,0,0-54.63-54.63l-11,11A8,8,0,0,1,135.7,59l11-11A54.65,54.65,0,0,1,224,48,54.86,54.86,0,0,1,240,88.23ZM109,185.66l-11,11A38.41,38.41,0,0,1,70.6,208h0a38.63,38.63,0,0,1-27.29-65.94L78,107.31A38.63,38.63,0,0,1,144,135.71a8,8,0,0,0,16,.45A54.86,54.86,0,0,0,144,96a54.65,54.65,0,0,0-77.27,0L32,130.75A54.62,54.62,0,0,0,70.56,224h0a54.28,54.28,0,0,0,38.64-16l11-11A8,8,0,0,0,109,185.66Z" />
-          </svg>
-          <div
-            style={{ flex: 1, height: "1px", background: "var(--grijs-300)" }}
-          />
-        </div>
-      </td>
-      <td>
-        <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>{lgNaam}</p>
-        <p style={{ fontSize: "0.72rem", color: "var(--grijs-500)" }}>
-          {koppeling.leidinggevende_email}
-        </p>
-      </td>
-      <td>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button
-            onClick={() => setBewerken(true)}
-            className="knop knop-ghost"
-            style={{ padding: "4px 8px" }}
-          >
+    <>
+      <tr
+        onClick={() => setToonPopup(true)}
+        style={{ cursor: "pointer" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "var(--grijs-50)")
+        }
+        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+      >
+        <td style={{ paddingLeft: "24px", textAlign: "center" }}>
+          <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>{lgNaam}</p>
+          <p style={{ fontSize: "0.72rem", color: "var(--grijs-500)" }}>
+            {koppeling.leidinggevende_email}
+          </p>
+        </td>
+        <td style={{ width: "120px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div
+              style={{ flex: 1, height: "1px", background: "var(--grijs-300)" }}
+            />
             <svg
-              width="15"
-              height="15"
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
               viewBox="0 0 256 256"
-              fill="currentColor"
+              fill="var(--grijs-400)"
             >
-              <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z" />
+              <path d="M240,88.23a54.43,54.43,0,0,1-16,37L189.25,160a54.27,54.27,0,0,1-38.63,16h-.05A54.63,54.63,0,0,1,96,119.84a8,8,0,0,1,16,.45A38.62,38.62,0,0,0,150.58,160h0a38.39,38.39,0,0,0,27.31-11.31l34.75-34.75a38.63,38.63,0,0,0-54.63-54.63l-11,11A8,8,0,0,1,135.7,59l11-11A54.65,54.65,0,0,1,224,48,54.86,54.86,0,0,1,240,88.23ZM109,185.66l-11,11A38.41,38.41,0,0,1,70.6,208h0a38.63,38.63,0,0,1-27.29-65.94L78,107.31A38.63,38.63,0,0,1,144,135.71a8,8,0,0,0,16,.45A54.86,54.86,0,0,0,144,96a54.65,54.65,0,0,0-77.27,0L32,130.75A54.62,54.62,0,0,0,70.56,224h0a54.28,54.28,0,0,0,38.64-16l11-11A8,8,0,0,0,109,185.66Z" />
             </svg>
-          </button>
-          <button
-            onClick={() => onVerwijder(koppeling)}
-            className="knop knop-gevaar"
-            style={{ padding: "4px 8px" }}
-          >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 256 256"
-              fill="currentColor"
+            <div
+              style={{ flex: 1, height: "1px", background: "var(--grijs-300)" }}
+            />
+          </div>
+        </td>
+        <td style={{ textAlign: "center" }}>
+          <p style={{ fontWeight: 600, fontSize: "0.85rem" }}>{traineeNaam}</p>
+          <p style={{ fontSize: "0.72rem", color: "var(--grijs-500)" }}>
+            {koppeling.trainee_email}
+          </p>
+        </td>
+      </tr>
+
+      {toonPopup && (
+        <KoppelingPopup
+          koppeling={koppeling}
+          trainees={trainees}
+          leidinggevenden={leidinggevenden}
+          onOpslaan={async (data) => {
+            await onOpslaan(koppeling, data);
+            setToonPopup(false);
+          }}
+          onVerwijder={async () => {
+            await onVerwijder(koppeling);
+            setToonPopup(false);
+          }}
+          onSluit={() => setToonPopup(false)}
+        />
+      )}
+    </>
+  );
+}
+
+function KoppelingPopup({
+  koppeling,
+  trainees,
+  leidinggevenden,
+  onOpslaan,
+  onVerwijder,
+  onSluit,
+}) {
+  const [traineeEmail, setTraineeEmail] = useState(koppeling.trainee_email);
+  const [lgEmail, setLgEmail] = useState(koppeling.leidinggevende_email);
+  const [toonVerwijderBevestiging, setToonVerwijderBevestiging] =
+    useState(false);
+  const [laden, setLaden] = useState(false);
+
+  async function opslaan() {
+    setLaden(true);
+    await onOpslaan({
+      trainee_email: traineeEmail,
+      leidinggevende_email: lgEmail,
+    });
+    setLaden(false);
+  }
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+      onClick={onSluit}
+    >
+      <div
+        style={{
+          background: "white",
+          borderRadius: "12px",
+          padding: "28px",
+          width: "420px",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {toonVerwijderBevestiging ? (
+          <>
+            <p
+              style={{
+                fontSize: "1rem",
+                fontWeight: 700,
+                color: "var(--grijs-900)",
+                marginBottom: "8px",
+              }}
             >
-              <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z" />
-            </svg>
-          </button>
-        </div>
-      </td>
-    </tr>
+              Koppeling verwijderen?
+            </p>
+            <p
+              style={{
+                fontSize: "0.85rem",
+                color: "var(--grijs-500)",
+                marginBottom: "24px",
+              }}
+            >
+              Weet je zeker dat je deze koppeling wilt verwijderen? Dit kan niet
+              ongedaan worden gemaakt.
+            </p>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button
+                onClick={onVerwijder}
+                className="knop knop-gevaar"
+                style={{ fontSize: "0.82rem" }}
+              >
+                Ja, verwijderen
+              </button>
+              <button
+                onClick={() => setToonVerwijderBevestiging(false)}
+                className="knop knop-ghost"
+                style={{ fontSize: "0.82rem" }}
+              >
+                Annuleren
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p
+              style={{
+                fontSize: "1rem",
+                fontWeight: 700,
+                color: "var(--grijs-900)",
+                marginBottom: "20px",
+              }}
+            >
+              Koppeling bewerken
+            </p>
+
+            <label
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color: "var(--grijs-500)",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Trainee
+            </label>
+            <select
+              value={traineeEmail}
+              onChange={(e) => setTraineeEmail(e.target.value)}
+              style={{
+                width: "100%",
+                fontSize: "0.85rem",
+                border: "1px solid var(--grijs-300)",
+                borderRadius: "6px",
+                padding: "7px 10px",
+                marginBottom: "12px",
+              }}
+            >
+              {trainees.map((t) => (
+                <option key={t.email} value={t.email}>
+                  {t.naam}
+                </option>
+              ))}
+            </select>
+
+            <label
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                color: "var(--grijs-500)",
+                display: "block",
+                marginBottom: "4px",
+              }}
+            >
+              Leidinggevende
+            </label>
+            <select
+              value={lgEmail}
+              onChange={(e) => setLgEmail(e.target.value)}
+              style={{
+                width: "100%",
+                fontSize: "0.85rem",
+                border: "1px solid var(--grijs-300)",
+                borderRadius: "6px",
+                padding: "7px 10px",
+                marginBottom: "20px",
+              }}
+            >
+              {leidinggevenden.map((l) => (
+                <option key={l.email} value={l.email}>
+                  {l.naam}
+                </option>
+              ))}
+            </select>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+                justifyContent: "space-between",
+              }}
+            >
+              <button
+                onClick={() => setToonVerwijderBevestiging(true)}
+                className="knop knop-gevaar"
+                style={{ fontSize: "0.82rem" }}
+              >
+                Verwijderen
+              </button>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button
+                  onClick={onSluit}
+                  className="knop knop-ghost"
+                  style={{ fontSize: "0.82rem" }}
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={opslaan}
+                  disabled={laden}
+                  className="knop knop-primair"
+                  style={{ fontSize: "0.82rem" }}
+                >
+                  {laden ? "Opslaan..." : "Opslaan"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -726,7 +963,7 @@ export default function GebruikersBeheerBlok() {
       toonMelding("Verwijderen mislukt.", "error");
       return;
     }
-    toonMelding("Gebruiker verwijderd.");
+    setMelding({ tekst: "Gebruiker verwijderd.", type: "popup" });
     laadData();
   }
 
@@ -739,7 +976,7 @@ export default function GebruikersBeheerBlok() {
       toonMelding("Opslaan mislukt.", "error");
       return;
     }
-    toonMelding("Gebruiker bijgewerkt.");
+    setMelding({ tekst: "Gebruiker bijgewerkt.", type: "popup" });
     laadData();
   }
 
@@ -776,7 +1013,7 @@ export default function GebruikersBeheerBlok() {
       .update({ leidinggevende_email: nieuw.leidinggevende_email })
       .eq("trainee_email", oud.trainee_email)
       .eq("leidinggevende_email", oud.leidinggevende_email);
-    toonMelding("Koppeling bijgewerkt.");
+    setMelding({ tekst: "Koppeling bijgewerkt.", type: "popup" });
     laadData();
   }
 
@@ -786,7 +1023,7 @@ export default function GebruikersBeheerBlok() {
       .delete()
       .eq("trainee_email", koppeling.trainee_email)
       .eq("leidinggevende_email", koppeling.leidinggevende_email);
-    toonMelding("Koppeling verwijderd.");
+    setMelding({ tekst: "Koppeling verwijderd.", type: "popup" });
     laadData();
   }
 
@@ -816,13 +1053,83 @@ export default function GebruikersBeheerBlok() {
 
   return (
     <div style={{ padding: "24px 28px" }}>
-      {/* Melding */}
-      {melding && (
+      {/* Popup melding */}
+      {melding?.type === "popup" && (
         <div
           style={{
-            background: melding.type === "success" ? "#E8F5E9" : "#FFEBEE",
-            border: `1px solid ${melding.type === "success" ? "#A5D6A7" : "#EF9A9A"}`,
-            color: melding.type === "success" ? "#1B5E20" : "#C62828",
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setMelding(null)}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: "16px",
+              padding: "32px 40px",
+              textAlign: "center",
+              boxShadow: "0 8px 40px rgba(0,0,0,0.2)",
+              maxWidth: "340px",
+              width: "90%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ fontSize: "2rem", marginBottom: "8px" }}>✓</p>
+            <p
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                color: "#1b5e20",
+                marginBottom: "4px",
+              }}
+            >
+              Opgeslagen!
+            </p>
+            <p style={{ fontSize: "0.85rem", color: "#616161" }}>
+              {melding.tekst}
+            </p>
+            <button
+              onClick={() => setMelding(null)}
+              style={{
+                marginTop: "16px",
+                padding: "8px 24px",
+                borderRadius: "50px",
+                background: "#2e7d32",
+                color: "white",
+                border: "none",
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "Inter, sans-serif",
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Inline melding */}
+      {melding && melding.type !== "popup" && (
+        <div
+          style={{
+            background:
+              melding.type === "success"
+                ? "#E8F5E9"
+                : melding.type === "waarschuwing"
+                  ? "#FFF8E1"
+                  : "#FFEBEE",
+            border: `1px solid ${melding.type === "success" ? "#A5D6A7" : melding.type === "waarschuwing" ? "#FFD54F" : "#EF9A9A"}`,
+            color:
+              melding.type === "success"
+                ? "#1B5E20"
+                : melding.type === "waarschuwing"
+                  ? "#E65100"
+                  : "#C62828",
             borderRadius: "8px",
             padding: "10px 16px",
             fontSize: "0.85rem",
@@ -881,6 +1188,66 @@ export default function GebruikersBeheerBlok() {
           />
         )}
 
+        {/* Trainees & Klanten */}
+        <p
+          style={{
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "var(--grijs-500)",
+            marginBottom: "8px",
+          }}
+        >
+          Trainees & Klanten
+        </p>
+        <div
+          style={{
+            background: "white",
+            border: "1px solid var(--grijs-200)",
+            borderRadius: "10px",
+            boxShadow: "var(--schaduw)",
+            overflow: "hidden",
+            marginBottom: "24px",
+          }}
+        >
+          <table className="tabel" style={{ width: "100%" }}>
+            <thead>
+              <tr>
+                <th style={{ paddingLeft: "24px" }}>Naam</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Aangemaakt op</th>
+              </tr>
+            </thead>
+            <tbody>
+              {gebruikers
+                .filter((g) => g.rol === "trainee" || g.rol === "klant")
+                .map((g) => (
+                  <GebruikerRij
+                    key={g.email}
+                    gebruiker={g}
+                    onOpslaan={gebruikerOpslaan}
+                    onVerwijder={gebruikerVerwijder}
+                  />
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Leidinggevenden & Beheerders */}
+        <p
+          style={{
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "var(--grijs-500)",
+            marginBottom: "8px",
+          }}
+        >
+          Leidinggevenden & Beheerders
+        </p>
         <div
           style={{
             background: "white",
@@ -897,19 +1264,21 @@ export default function GebruikersBeheerBlok() {
                 <th>Email</th>
                 <th>Rol</th>
                 <th>Aangemaakt op</th>
-                <th></th>
               </tr>
             </thead>
             <tbody>
-              {gebruikers.map((g) => (
-                <GebruikerRij
-                  key={g.email}
-                  gebruiker={g}
-                  onOpslaan={gebruikerOpslaan}
-                  onVerwijder={gebruikerVerwijder}
-                  kanVerwijderen={true}
-                />
-              ))}
+              {gebruikers
+                .filter(
+                  (g) => g.rol === "leidinggevende" || g.rol === "beheerder",
+                )
+                .map((g) => (
+                  <GebruikerRij
+                    key={g.email}
+                    gebruiker={g}
+                    onOpslaan={gebruikerOpslaan}
+                    onVerwijder={gebruikerVerwijder}
+                  />
+                ))}
             </tbody>
           </table>
         </div>
@@ -976,11 +1345,10 @@ export default function GebruikersBeheerBlok() {
             <thead>
               <tr>
                 <th style={{ paddingLeft: "24px", textAlign: "center" }}>
-                  Trainee
+                  Leidinggevende
                 </th>
                 <th style={{ width: "120px" }}></th>
-                <th style={{ textAlign: "center" }}>Leidinggevende</th>
-                <th></th>
+                <th style={{ textAlign: "center" }}>Trainee</th>
               </tr>
             </thead>
             <tbody>
