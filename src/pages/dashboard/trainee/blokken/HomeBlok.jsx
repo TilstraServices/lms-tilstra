@@ -187,7 +187,12 @@ export default function HomeBlok({ email, naam }) {
       huidigModule?.categorie || huidigModule?.modules?.categorie
     ] || MODULE_KLEUREN.BKL;
   const initialen = naam
-    ? naam.substring(0, 2).toUpperCase()
+    ? naam
+        .split(" ")
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
     : email
       ? email.substring(0, 2).toUpperCase()
       : "??";

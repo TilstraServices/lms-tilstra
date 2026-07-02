@@ -385,6 +385,7 @@ export default function QuizContainer() {
   const [score, setScore] = useState(null);
   const [resetTeller, setResetTeller] = useState(0);
   const [heeftAntwoordGezien, setHeeftAntwoordGezien] = useState(false);
+  const [antwoordGezienInSessie, setAntwoordGezienInSessie] = useState(false);
   const [toonWaarschuwing, setToonWaarschuwing] = useState(false);
   const [waarschuwingNietMeerTonen, setWaarschuwingNietMeerTonen] =
     useState(false);
@@ -463,7 +464,7 @@ export default function QuizContainer() {
     setGecontroleerd(true);
     setOpgeslagen(true);
 
-    if (email && scorePercentage !== null && !heeftAntwoordGezien) {
+    if (email && scorePercentage !== null && !antwoordGezienInSessie) {
       slaScoreOp(scorePercentage);
     }
   }
@@ -619,7 +620,7 @@ export default function QuizContainer() {
     setGecontroleerd(false);
     setOpgeslagen(false);
     setScore(null);
-    setHeeftAntwoordGezien(false);
+    setHeeftAntwoordGezien(antwoordGezienInSessie);
     setResetTeller((prev) => prev + 1);
   }
 
@@ -753,6 +754,7 @@ export default function QuizContainer() {
               <button
                 onClick={() => {
                   setHeeftAntwoordGezien(true);
+                  setAntwoordGezienInSessie(true);
                   setToonWaarschuwing(false);
                   if (pendingCallback) {
                     pendingCallback();
@@ -965,6 +967,7 @@ export default function QuizContainer() {
                   onToonAntwoord={(callback) => {
                     if (waarschuwingNietMeerTonen) {
                       setHeeftAntwoordGezien(true);
+                      setAntwoordGezienInSessie(true);
                       callback();
                     } else {
                       setToonWaarschuwing(true);
@@ -982,6 +985,7 @@ export default function QuizContainer() {
                   onToonAntwoord={(callback) => {
                     if (waarschuwingNietMeerTonen) {
                       setHeeftAntwoordGezien(true);
+                      setAntwoordGezienInSessie(true);
                       callback();
                     } else {
                       setToonWaarschuwing(true);
