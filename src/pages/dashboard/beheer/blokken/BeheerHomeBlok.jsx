@@ -2,53 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../../../lib/supabase";
 
-function StatBlok({ icoon, label, waarde, kleur }) {
-  return (
-    <div
-      style={{
-        background: "white",
-        border: "1px solid var(--grijs-200)",
-        borderRadius: "10px",
-        padding: "16px 20px",
-        boxShadow: "var(--schaduw)",
-        flex: 1,
-        borderTop: `3px solid ${kleur || "var(--groen)"}`,
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          marginBottom: "8px",
-        }}
-      >
-        <span style={{ color: kleur || "var(--groen)" }}>{icoon}</span>
-        <p
-          style={{
-            fontSize: "0.68rem",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            color: "var(--grijs-500)",
-          }}
-        >
-          {label}
-        </p>
-      </div>
-      <p
-        style={{
-          fontSize: "1.6rem",
-          fontWeight: 700,
-          color: kleur || "var(--groen-donker)",
-        }}
-      >
-        {waarde ?? "—"}
-      </p>
-    </div>
-  );
-}
-
 function NotitieRij({
   notitie,
   isPrio,
@@ -433,13 +386,6 @@ function GeschiedenisModal({ onSluit, onTerugzetten }) {
 
 export default function BeheerHomeBlok({ email }) {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    trainees: 0,
-    leidinggevenden: 0,
-    beheerders: 0,
-    modules: 0,
-    gedetacheerd: 0,
-  });
   const [notities, setNotities] = useState([]);
   const [prioId, setPrioId] = useState(null);
   const [laden, setLaden] = useState(true);
@@ -450,30 +396,17 @@ export default function BeheerHomeBlok({ email }) {
     async function laadData() {
       setLaden(true);
 
-      const [gebruikersRes, modulesRes, notitiesRes, gedetacheerdRes] =
-        await Promise.all([
-          supabase.from("gebruikers").select("rol"),
-          supabase.from("modules").select("id", { count: "exact" }),
-          supabase
-            .from("notities_beheer")
-            .select("*")
-            .eq("verwijderd", false)
-            .order("aangemaakt_op", { ascending: true }),
-          supabase
-            .from("koppeling")
-            .select("gedetacheerd")
-            .eq("gedetacheerd", true),
-        ]);
-
-      const gebruikers = gebruikersRes.data || [];
-      setStats({
-        trainees: gebruikers.filter((g) => g.rol === "trainee").length,
-        leidinggevenden: gebruikers.filter((g) => g.rol === "leidinggevende")
-          .length,
-        beheerders: gebruikers.filter((g) => g.rol === "beheerder").length,
-        modules: modulesRes.count || 0,
-        gedetacheerd: gedetacheerdRes.data?.length || 0,
-      });
+      const [notitiesRes] = await Promise.all([
+        supabase
+          .from("notities_beheer")
+          .select("*")
+          .eq("verwijderd", false)
+          .order("aangemaakt_op", { ascending: true }),
+        supabase
+          .from("koppeling")
+          .select("gedetacheerd")
+          .eq("gedetacheerd", true),
+      ]);
 
       const data = notitiesRes.data || [];
       setNotities(data);
@@ -619,70 +552,6 @@ export default function BeheerHomeBlok({ email }) {
           </button>
         </div>
       )}
-
-      {/* Stat blokken */}
-      <div style={{ display: "flex", gap: "16px", marginBottom: "28px" }}>
-        <StatBlok
-          icoon={
-            <svg
-              width="18"
-              height="18"
-              fill="currentColor"
-              viewBox="0 0 256 256"
-            >
-              <path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.43a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.49A8,8,0,0,1,250.14,206.7Z" />
-            </svg>
-          }
-          label="Trainees"
-          waarde={stats.trainees}
-          kleur="var(--groen)"
-        />
-        <StatBlok
-          icoon={
-            <svg
-              width="18"
-              height="18"
-              fill="currentColor"
-              viewBox="0 0 256 256"
-            >
-              <path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.43a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.49A8,8,0,0,1,250.14,206.7Z" />
-            </svg>
-          }
-          label="Leidinggevenden"
-          waarde={stats.leidinggevenden}
-          kleur="#1565C0"
-        />
-        <StatBlok
-          icoon={
-            <svg
-              width="18"
-              height="18"
-              fill="currentColor"
-              viewBox="0 0 256 256"
-            >
-              <path d="M224,48H32A16,16,0,0,0,16,64V88a16,16,0,0,0,16,16v88a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V104a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM208,192H48V104H208ZM224,88H32V64H224V88ZM96,136a8,8,0,0,1,8-8h48a8,8,0,0,1,0,16H104A8,8,0,0,1,96,136Z" />
-            </svg>
-          }
-          label="Modules"
-          waarde={stats.modules}
-          kleur="#6A1B9A"
-        />
-        <StatBlok
-          icoon={
-            <svg
-              width="18"
-              height="18"
-              fill="currentColor"
-              viewBox="0 0 256 256"
-            >
-              <path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.43a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.49A8,8,0,0,1,250.14,206.7Z" />
-            </svg>
-          }
-          label="Ooit gedetacheerd"
-          waarde={stats.gedetacheerd}
-          kleur="#E65100"
-        />
-      </div>
 
       {/* Notities */}
       <div>
