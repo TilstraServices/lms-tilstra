@@ -8,7 +8,6 @@ function MeerkeuzVraag({
   onChange,
   gecontroleerd,
   onToonAntwoord,
-  heeftAntwoordGezien,
 }) {
   const [geselecteerd, setGeselecteerd] = useState([]);
   const meerdere = vraag.meerdere_correct;
@@ -196,11 +195,7 @@ function MeerkeuzVraag({
               {!alleCorrect && !toonAntwoord && (
                 <button
                   onClick={() => {
-                    if (heeftAntwoordGezien) {
-                      setToonAntwoord(true);
-                    } else {
-                      onToonAntwoord(() => setToonAntwoord(true));
-                    }
+                    onToonAntwoord(() => setToonAntwoord(true));
                   }}
                   style={{
                     marginLeft: "auto",
@@ -226,13 +221,7 @@ function MeerkeuzVraag({
 }
 
 // ── Open vraag component ──
-function OpenVraag({
-  vraag,
-  onChange,
-  gecontroleerd,
-  onToonAntwoord,
-  heeftAntwoordGezien,
-}) {
+function OpenVraag({ vraag, onChange, gecontroleerd, onToonAntwoord }) {
   const [waarde, setWaarde] = useState("");
   const [toonAntwoord, setToonAntwoord] = useState(false);
 
@@ -317,11 +306,7 @@ function OpenVraag({
           {!isCorrect && !toonAntwoord && (
             <button
               onClick={() => {
-                if (heeftAntwoordGezien) {
-                  setToonAntwoord(true);
-                } else {
-                  onToonAntwoord(() => setToonAntwoord(true));
-                }
+                onToonAntwoord(() => setToonAntwoord(true));
               }}
               style={{
                 marginLeft: "auto",
@@ -384,8 +369,12 @@ export default function QuizContainer() {
   const [opgeslagen, setOpgeslagen] = useState(false);
   const [score, setScore] = useState(null);
   const [resetTeller, setResetTeller] = useState(0);
-  const [heeftAntwoordGezien, setHeeftAntwoordGezien] = useState(false);
-  const [antwoordGezienInSessie, setAntwoordGezienInSessie] = useState(false);
+  const [antwoordGezienInSessie, setAntwoordGezienInSessie] = useState(
+    () =>
+      sessionStorage.getItem(
+        `quiz_gezien_${new URLSearchParams(window.location.search).get("id")}`,
+      ) === "true",
+  );
   const [toonWaarschuwing, setToonWaarschuwing] = useState(false);
   const [waarschuwingNietMeerTonen, setWaarschuwingNietMeerTonen] =
     useState(false);
@@ -464,7 +453,14 @@ export default function QuizContainer() {
     setGecontroleerd(true);
     setOpgeslagen(true);
 
-    if (email && scorePercentage !== null && !antwoordGezienInSessie) {
+    const gezienInStorage =
+      sessionStorage.getItem(`quiz_gezien_${quizId}`) === "true";
+    if (
+      email &&
+      scorePercentage !== null &&
+      !antwoordGezienInSessie &&
+      !gezienInStorage
+    ) {
       slaScoreOp(scorePercentage);
     }
   }
@@ -620,7 +616,6 @@ export default function QuizContainer() {
     setGecontroleerd(false);
     setOpgeslagen(false);
     setScore(null);
-    setHeeftAntwoordGezien(antwoordGezienInSessie);
     setResetTeller((prev) => prev + 1);
   }
 
@@ -711,9 +706,13 @@ export default function QuizContainer() {
                 marginBottom: "16px",
               }}
             >
-              Als je het antwoord bekijkt telt deze vraag{" "}
-              <strong>niet meer mee</strong> voor je score, ook niet als je
-              opnieuw probeert.
+              Als je het antwoord van een <strong>meerkeuze vraag</strong>{" "}
+              bekijkt telt de hele quiz niet meer mee voor je score in deze
+              sessie. Je kunt de quiz later opnieuw proberen.
+              <br />
+              <br />
+              Open vragen kun je altijd inzien — die tellen niet mee in de
+              score.
             </p>
             <label
               style={{
@@ -753,8 +752,8 @@ export default function QuizContainer() {
               </button>
               <button
                 onClick={() => {
-                  setHeeftAntwoordGezien(true);
                   setAntwoordGezienInSessie(true);
+                  sessionStorage.setItem(`quiz_gezien_${quizId}`, "true");
                   setToonWaarschuwing(false);
                   if (pendingCallback) {
                     pendingCallback();
@@ -963,11 +962,10 @@ export default function QuizContainer() {
                   antwoorden={vraag.antwoorden}
                   onChange={(selectie) => updateAntwoord(vraag.id, selectie)}
                   gecontroleerd={gecontroleerd}
-                  heeftAntwoordGezien={heeftAntwoordGezien}
                   onToonAntwoord={(callback) => {
                     if (waarschuwingNietMeerTonen) {
-                      setHeeftAntwoordGezien(true);
                       setAntwoordGezienInSessie(true);
+                      sessionStorage.setItem(`quiz_gezien_${quizId}`, "true");
                       callback();
                     } else {
                       setToonWaarschuwing(true);
@@ -981,17 +979,8 @@ export default function QuizContainer() {
                   vraag={vraag}
                   onChange={(tekst) => updateAntwoord(vraag.id, tekst)}
                   gecontroleerd={gecontroleerd}
-                  heeftAntwoordGezien={heeftAntwoordGezien}
                   onToonAntwoord={(callback) => {
-                    if (waarschuwingNietMeerTonen) {
-                      setHeeftAntwoordGezien(true);
-                      setAntwoordGezienInSessie(true);
-                      callback();
-                    } else {
-                      setToonWaarschuwing(true);
-                      // Sla callback op zodat we hem kunnen aanroepen na bevestiging
-                      setPendingCallback(() => callback);
-                    }
+                    callback();
                   }}
                 />
               )}
