@@ -187,7 +187,7 @@ export default function QuizBeheer({ quiz }) {
         <button
           className="knop knop-secundair"
           style={{ fontSize: "0.78rem", padding: "6px 12px", width: "100%" }}
-          onClick={voegVraagToe}
+          onClick={() => voegVraagToe("meerkeuze")}
           disabled={nieuweVraagLaden}
         >
           {nieuweVraagLaden ? "Aanmaken..." : "+ Nieuwe vraag"}
@@ -303,7 +303,6 @@ function VraagBewerken({ vraag, onHerlaad, onVerwijder }) {
         <div style={{ display: "flex", gap: "6px" }}>
           <button
             onClick={async () => {
-              if (vraag.type === "meerkeuze") return;
               await supabase
                 .from("vragen")
                 .update({ type: "meerkeuze" })
@@ -338,6 +337,12 @@ function VraagBewerken({ vraag, onHerlaad, onVerwijder }) {
                   volgorde: 3,
                 },
               ]);
+              const { data } = await supabase
+                .from("antwoorden")
+                .select("*")
+                .eq("vraag_id", vraag.id)
+                .order("volgorde");
+              if (data) setAntwoorden(data);
               onHerlaad();
             }}
             style={{
@@ -382,6 +387,12 @@ function VraagBewerken({ vraag, onHerlaad, onVerwijder }) {
                   volgorde: 1,
                 },
               ]);
+              const { data } = await supabase
+                .from("antwoorden")
+                .select("*")
+                .eq("vraag_id", vraag.id)
+                .order("volgorde");
+              if (data) setAntwoorden(data);
               onHerlaad();
             }}
             style={{
