@@ -29,13 +29,14 @@ export default function QuizBeheer({ quiz }) {
     if (!error && data) setVragen(data);
   }
 
-  async function voegVraagToe() {
+  async function voegVraagToe(sjabloon = "meerkeuze") {
     setNieuweVraagLaden(true);
+    const dbType = sjabloon === "stelling" ? "meerkeuze" : sjabloon;
     const { data } = await supabase
       .from("vragen")
       .insert({
         vraag: "",
-        type: "meerkeuze",
+        type: dbType,
         quiz_id: quiz.id,
         volgorde: vragen.length,
         meerdere_correct: false,
@@ -44,12 +45,31 @@ export default function QuizBeheer({ quiz }) {
       .single();
 
     if (data) {
-      await supabase.from("antwoorden").insert([
-        { vraag_id: data.id, tekst: "", is_correct: true, volgorde: 0 },
-        { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 1 },
-        { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 2 },
-        { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 3 },
-      ]);
+      if (sjabloon === "meerkeuze") {
+        await supabase.from("antwoorden").insert([
+          { vraag_id: data.id, tekst: "", is_correct: true, volgorde: 0 },
+          { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 1 },
+          { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 2 },
+          { vraag_id: data.id, tekst: "", is_correct: false, volgorde: 3 },
+        ]);
+      } else if (sjabloon === "stelling") {
+        await supabase.from("antwoorden").insert([
+          { vraag_id: data.id, tekst: "Waar", is_correct: true, volgorde: 0 },
+          {
+            vraag_id: data.id,
+            tekst: "Niet waar",
+            is_correct: false,
+            volgorde: 1,
+          },
+        ]);
+      } else if (sjabloon === "open") {
+        await supabase.from("antwoorden").insert({
+          vraag_id: data.id,
+          tekst: "",
+          is_correct: true,
+          volgorde: 0,
+        });
+      }
       await herlaadVragen();
       setGeselecteerdeVraag(data.id);
     }
@@ -336,6 +356,57 @@ function VraagBewerken({ vraag, onHerlaad, onVerwijder }) {
             }}
           >
             Meerkeuze
+          </button>
+
+          <button
+            onClick={async () => {
+              await supabase
+                .from("vragen")
+                .update({ type: "meerkeuze" })
+                .eq("id", vraag.id);
+              await supabase
+                .from("antwoorden")
+                .delete()
+                .eq("vraag_id", vraag.id);
+              await supabase.from("antwoorden").insert([
+                {
+                  vraag_id: vraag.id,
+                  tekst: "Waar",
+                  is_correct: true,
+                  volgorde: 0,
+                },
+                {
+                  vraag_id: vraag.id,
+                  tekst: "Niet waar",
+                  is_correct: false,
+                  volgorde: 1,
+                },
+              ]);
+              onHerlaad();
+            }}
+            style={{
+              padding: "4px 12px",
+              borderRadius: "50px",
+              fontSize: "0.78rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              fontFamily: "Inter, sans-serif",
+              border: "none",
+              background:
+                vraag.type === "meerkeuze" &&
+                antwoorden.length === 2 &&
+                antwoorden.some((a) => a.tekst === "Waar")
+                  ? "var(--groen)"
+                  : "var(--grijs-200)",
+              color:
+                vraag.type === "meerkeuze" &&
+                antwoorden.length === 2 &&
+                antwoorden.some((a) => a.tekst === "Waar")
+                  ? "white"
+                  : "var(--grijs-700)",
+            }}
+          >
+            Stelling
           </button>
           <button
             onClick={async () => {

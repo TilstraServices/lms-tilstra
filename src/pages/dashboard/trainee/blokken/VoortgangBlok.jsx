@@ -324,7 +324,7 @@ function ModuleRij({
         >
           {cat.label}
         </span>
-        {actief && voortgang !== undefined ? (
+        {voortgang !== undefined ? (
           <div style={{ width: "100px", flexShrink: 0 }}>
             <div
               style={{
@@ -357,7 +357,7 @@ function ModuleRij({
           <div style={{ width: "100px", flexShrink: 0 }} />
         )}
         <div style={{ width: "110px", flexShrink: 0, textAlign: "right" }}>
-          {actief && score !== null && score !== undefined && (
+          {score !== null && score !== undefined && (
             <p
               style={{
                 fontSize: "0.78rem",
@@ -368,7 +368,7 @@ function ModuleRij({
               <ParagraafIcoon size={12} /> {score}%
             </p>
           )}
-          {actief && quizScore !== null && quizScore !== undefined && (
+          {quizScore !== null && quizScore !== undefined && (
             <p
               style={{
                 fontSize: "0.78rem",
@@ -389,7 +389,7 @@ function ModuleRij({
               </p>
             )}
         </div>
-        {actief ? (
+        {voortgang !== undefined ? (
           <span
             style={{
               fontSize: "0.72rem",
@@ -538,7 +538,7 @@ function ModuleRij({
                 color: actief ? cat.primair : "var(--grijs-300)",
               }}
             >
-              {actief && voortgang !== undefined ? `${voortgang}%` : "—"}
+              {voortgang !== undefined ? `${voortgang}%` : "—"}
             </p>
           </div>
           <div
@@ -567,7 +567,7 @@ function ModuleRij({
             >
               <p style={{ fontSize: "0.82rem", color: "var(--grijs-500)" }}>
                 <ParagraafIcoon size={13} />{" "}
-                {actief && score !== null && score !== undefined ? (
+                {score !== null && score !== undefined ? (
                   <strong
                     style={{ color: score >= 70 ? "#2E7D32" : "#C62828" }}
                   >
@@ -579,7 +579,7 @@ function ModuleRij({
               </p>
               <p style={{ fontSize: "0.82rem", color: "var(--grijs-500)" }}>
                 <VraagIcoon size={13} />{" "}
-                {actief && quizScore !== null && quizScore !== undefined ? (
+                {quizScore !== null && quizScore !== undefined ? (
                   <strong
                     style={{ color: quizScore >= 70 ? "#2E7D32" : "#C62828" }}
                   >
@@ -692,81 +692,79 @@ export default function VoortgangBlok({ email }) {
       setMijnModules(actief);
     }
 
-    if (activeModuleIds.length > 0) {
-      const { data: voortgangData } = await supabase
-        .from("module_voortgang")
-        .select("module_id, voortgang")
-        .eq("trainee_email", email)
-        .in("module_id", activeModuleIds);
+    // Voortgang voor alle modules
+    const { data: voortgangData } = await supabase
+      .from("module_voortgang")
+      .select("module_id, voortgang")
+      .eq("trainee_email", email);
 
-      const vMap = {};
-      if (voortgangData)
-        voortgangData.forEach((v) => {
-          vMap[v.module_id] = v.voortgang;
-        });
-      setVoortgangMap(vMap);
-
-      const { data: scoreData } = await supabase
-        .from("scores")
-        .select(
-          "opgave_id, score, poging_nummer, opgaves(paragraaf_id, paragrafen(hoofdstuk_id, hoofdstukken(module_id)))",
-        )
-        .eq("trainee_email", email)
-        .order("poging_nummer", { ascending: false });
-
-      const laasteScoresMap = {};
-      (scoreData || []).forEach((s) => {
-        if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+    const vMap = {};
+    if (voortgangData)
+      voortgangData.forEach((v) => {
+        vMap[v.module_id] = v.voortgang;
       });
+    setVoortgangMap(vMap);
 
-      const sMap = {};
-      Object.values(laasteScoresMap).forEach((s) => {
-        const moduleId = s.opgaves?.paragrafen?.hoofdstukken?.module_id;
-        if (!moduleId || !activeModuleIds.includes(moduleId)) return;
-        if (!sMap[moduleId]) sMap[moduleId] = [];
-        sMap[moduleId].push(s.score);
-      });
+    const { data: scoreData } = await supabase
+      .from("scores")
+      .select(
+        "opgave_id, score, poging_nummer, opgaves(paragraaf_id, paragrafen(hoofdstuk_id, hoofdstukken(module_id)))",
+      )
+      .eq("trainee_email", email)
+      .order("poging_nummer", { ascending: false });
 
-      Object.keys(sMap).forEach((moduleId) => {
-        const scores = sMap[moduleId];
-        sMap[moduleId] = Math.round(
-          scores.reduce((a, b) => a + b, 0) / scores.length,
-        );
-      });
+    const laasteScoresMap = {};
+    (scoreData || []).forEach((s) => {
+      if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+    });
 
-      setScoreMap(sMap);
+    const sMap = {};
+    Object.values(laasteScoresMap).forEach((s) => {
+      const moduleId = s.opgaves?.paragrafen?.hoofdstukken?.module_id;
+      if (!moduleId) return;
+      if (!sMap[moduleId]) sMap[moduleId] = [];
+      sMap[moduleId].push(s.score);
+    });
 
-      // Quiz scores per module
-      const { data: quizScoreData } = await supabase
-        .from("quiz_scores")
-        .select(
-          "quiz_id, score, poging_nummer, quizen(hoofdstuk_id, hoofdstukken(module_id))",
-        )
-        .eq("trainee_email", email)
-        .order("poging_nummer", { ascending: false });
+    Object.keys(sMap).forEach((moduleId) => {
+      const scores = sMap[moduleId];
+      sMap[moduleId] = Math.round(
+        scores.reduce((a, b) => a + b, 0) / scores.length,
+      );
+    });
 
-      const laasteQuizScoresMap = {};
-      (quizScoreData || []).forEach((s) => {
-        if (!laasteQuizScoresMap[s.quiz_id]) laasteQuizScoresMap[s.quiz_id] = s;
-      });
+    setScoreMap(sMap);
 
-      const qMap = {};
-      Object.values(laasteQuizScoresMap).forEach((s) => {
-        const moduleId = s.quizen?.hoofdstukken?.module_id;
-        if (!moduleId || !activeModuleIds.includes(moduleId)) return;
-        if (!qMap[moduleId]) qMap[moduleId] = [];
-        qMap[moduleId].push(s.score);
-      });
+    // Quiz scores per module
+    const { data: quizScoreData } = await supabase
+      .from("quiz_scores")
+      .select(
+        "quiz_id, score, poging_nummer, quizen(hoofdstuk_id, hoofdstukken(module_id))",
+      )
+      .eq("trainee_email", email)
+      .order("poging_nummer", { ascending: false });
 
-      Object.keys(qMap).forEach((moduleId) => {
-        const scores = qMap[moduleId];
-        qMap[moduleId] = Math.round(
-          scores.reduce((a, b) => a + b, 0) / scores.length,
-        );
-      });
+    const laasteQuizScoresMap = {};
+    (quizScoreData || []).forEach((s) => {
+      if (!laasteQuizScoresMap[s.quiz_id]) laasteQuizScoresMap[s.quiz_id] = s;
+    });
 
-      setQuizScoreMap(qMap);
-    }
+    const qMap = {};
+    Object.values(laasteQuizScoresMap).forEach((s) => {
+      const moduleId = s.quizen?.hoofdstukken?.module_id;
+      if (!moduleId) return;
+      if (!qMap[moduleId]) qMap[moduleId] = [];
+      qMap[moduleId].push(s.score);
+    });
+
+    Object.keys(qMap).forEach((moduleId) => {
+      const scores = qMap[moduleId];
+      qMap[moduleId] = Math.round(
+        scores.reduce((a, b) => a + b, 0) / scores.length,
+      );
+    });
+
+    setQuizScoreMap(qMap);
 
     setLaden(false);
   }
@@ -1011,7 +1009,12 @@ export default function VoortgangBlok({ email }) {
                     voortgang={voortgangMap[module.id]}
                     score={scoreMap[module.id]}
                     quizScore={quizScoreMap[module.id]}
-                    actief={activeModuleIds.includes(module.id)}
+                    actief={
+                      activeModuleIds.includes(module.id) ||
+                      scoreMap[module.id] !== undefined ||
+                      quizScoreMap[module.id] !== undefined ||
+                      voortgangMap[module.id] !== undefined
+                    }
                     open={openAlleModule === module.id}
                     onToggle={() =>
                       setOpenAlleModule(

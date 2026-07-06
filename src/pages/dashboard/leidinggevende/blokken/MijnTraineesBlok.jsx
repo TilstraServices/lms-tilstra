@@ -709,81 +709,78 @@ function TraineeDetail({ trainee, onTerug }) {
         setMijnModules(actief);
       }
 
-      if (activeModuleIds.length > 0) {
-        const { data: voortgangData } = await supabase
-          .from("module_voortgang")
-          .select("module_id, voortgang")
-          .eq("trainee_email", trainee.email)
-          .in("module_id", activeModuleIds);
-        const vMap = {};
-        if (voortgangData)
-          voortgangData.forEach((v) => {
-            vMap[v.module_id] = v.voortgang;
-          });
-        setVoortgangMap(vMap);
-
-        const { data: scoreData } = await supabase
-          .from("scores")
-          .select(
-            "opgave_id, score, poging_nummer, opgaves(paragraaf_id, paragrafen(hoofdstuk_id, hoofdstukken(module_id)))",
-          )
-          .eq("trainee_email", trainee.email)
-          .order("poging_nummer", { ascending: false });
-
-        const laasteScoresMap = {};
-        (scoreData || []).forEach((s) => {
-          if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+      // Voortgang voor alle modules
+      const { data: voortgangData } = await supabase
+        .from("module_voortgang")
+        .select("module_id, voortgang")
+        .eq("trainee_email", trainee.email);
+      const vMap = {};
+      if (voortgangData)
+        voortgangData.forEach((v) => {
+          vMap[v.module_id] = v.voortgang;
         });
+      setVoortgangMap(vMap);
 
-        const sMap = {};
-        Object.values(laasteScoresMap).forEach((s) => {
-          const moduleId = s.opgaves?.paragrafen?.hoofdstukken?.module_id;
-          if (!moduleId || !activeModuleIds.includes(moduleId)) return;
-          if (!sMap[moduleId]) sMap[moduleId] = [];
-          sMap[moduleId].push(s.score);
-        });
+      const { data: scoreData } = await supabase
+        .from("scores")
+        .select(
+          "opgave_id, score, poging_nummer, opgaves(paragraaf_id, paragrafen(hoofdstuk_id, hoofdstukken(module_id)))",
+        )
+        .eq("trainee_email", trainee.email)
+        .order("poging_nummer", { ascending: false });
 
-        Object.keys(sMap).forEach((moduleId) => {
-          const scores = sMap[moduleId];
-          sMap[moduleId] = Math.round(
-            scores.reduce((a, b) => a + b, 0) / scores.length,
-          );
-        });
+      const laasteScoresMap = {};
+      (scoreData || []).forEach((s) => {
+        if (!laasteScoresMap[s.opgave_id]) laasteScoresMap[s.opgave_id] = s;
+      });
 
-        setScoreMap(sMap);
+      const sMap = {};
+      Object.values(laasteScoresMap).forEach((s) => {
+        const moduleId = s.opgaves?.paragrafen?.hoofdstukken?.module_id;
+        if (!moduleId) return;
+        if (!sMap[moduleId]) sMap[moduleId] = [];
+        sMap[moduleId].push(s.score);
+      });
 
-        // Quiz scores per module
-        const { data: quizScoreData } = await supabase
-          .from("quiz_scores")
-          .select(
-            "quiz_id, score, poging_nummer, quizen(hoofdstuk_id, hoofdstukken(module_id))",
-          )
-          .eq("trainee_email", trainee.email)
-          .order("poging_nummer", { ascending: false });
+      Object.keys(sMap).forEach((moduleId) => {
+        const scores = sMap[moduleId];
+        sMap[moduleId] = Math.round(
+          scores.reduce((a, b) => a + b, 0) / scores.length,
+        );
+      });
 
-        const laasteQuizScoresMap = {};
-        (quizScoreData || []).forEach((s) => {
-          if (!laasteQuizScoresMap[s.quiz_id])
-            laasteQuizScoresMap[s.quiz_id] = s;
-        });
+      setScoreMap(sMap);
 
-        const qMap = {};
-        Object.values(laasteQuizScoresMap).forEach((s) => {
-          const moduleId = s.quizen?.hoofdstukken?.module_id;
-          if (!moduleId || !activeModuleIds.includes(moduleId)) return;
-          if (!qMap[moduleId]) qMap[moduleId] = [];
-          qMap[moduleId].push(s.score);
-        });
+      // Quiz scores per module
+      const { data: quizScoreData } = await supabase
+        .from("quiz_scores")
+        .select(
+          "quiz_id, score, poging_nummer, quizen(hoofdstuk_id, hoofdstukken(module_id))",
+        )
+        .eq("trainee_email", trainee.email)
+        .order("poging_nummer", { ascending: false });
 
-        Object.keys(qMap).forEach((moduleId) => {
-          const scores = qMap[moduleId];
-          qMap[moduleId] = Math.round(
-            scores.reduce((a, b) => a + b, 0) / scores.length,
-          );
-        });
+      const laasteQuizScoresMap = {};
+      (quizScoreData || []).forEach((s) => {
+        if (!laasteQuizScoresMap[s.quiz_id]) laasteQuizScoresMap[s.quiz_id] = s;
+      });
 
-        setQuizScoreMap(qMap);
-      }
+      const qMap = {};
+      Object.values(laasteQuizScoresMap).forEach((s) => {
+        const moduleId = s.quizen?.hoofdstukken?.module_id;
+        if (!moduleId) return;
+        if (!qMap[moduleId]) qMap[moduleId] = [];
+        qMap[moduleId].push(s.score);
+      });
+
+      Object.keys(qMap).forEach((moduleId) => {
+        const scores = qMap[moduleId];
+        qMap[moduleId] = Math.round(
+          scores.reduce((a, b) => a + b, 0) / scores.length,
+        );
+      });
+
+      setQuizScoreMap(qMap);
 
       setLaden(false);
     }
@@ -1339,7 +1336,12 @@ function TraineeDetail({ trainee, onTerug }) {
                       voortgang={voortgangMap[module.id]}
                       score={scoreMap[module.id]}
                       quizScore={quizScoreMap[module.id]}
-                      actief={activeModuleIds.includes(module.id)}
+                      actief={
+                        activeModuleIds.includes(module.id) ||
+                        scoreMap[module.id] !== undefined ||
+                        quizScoreMap[module.id] !== undefined ||
+                        voortgangMap[module.id] !== undefined
+                      }
                       open={openAlleModule === module.id}
                       onToggle={() =>
                         setOpenAlleModule(
