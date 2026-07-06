@@ -45,42 +45,13 @@ function MeerkeuzVraag({
     return "idle";
   }
 
-  const stijlen = {
-    idle: {
-      border: "1.5px solid #DADCE0",
-      background: "#F0F2F5",
-      color: "#1A1A1A",
-    },
-    selected: {
-      border: "1.5px solid #43A047",
-      background: "#E8F5E9",
-      color: "#1A1A1A",
-      boxShadow: "0 0 0 3px rgba(67,160,71,0.15)",
-    },
-    correct: {
-      border: "1.5px solid #2E7D32",
-      background: "#E8F5E9",
-      color: "#2E7D32",
-      fontWeight: 600,
-    },
-    fout: {
-      border: "1.5px solid #C62828",
-      background: "#FFEBEE",
-      color: "#C62828",
-    },
-    gemist: {
-      border: "1.5px dashed #2E7D32",
-      background: "#F1F8E9",
-      color: "#2E7D32",
-      opacity: 0.8,
-    },
-  };
+  const letters = ["A", "B", "C", "D", "E", "F"];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
       {antwoorden
         .sort((a, b) => a.volgorde - b.volgorde)
-        .map((antwoord) => {
+        .map((antwoord, index) => {
           const status = getStatus(antwoord);
           return (
             <div
@@ -89,72 +60,100 @@ function MeerkeuzVraag({
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "12px",
-                padding: "11px 16px",
-                borderRadius: "8px",
+                gap: "14px",
+                padding: "14px 18px",
+                borderRadius: "12px",
                 cursor: gecontroleerd ? "default" : "pointer",
                 transition: "all 0.12s",
                 userSelect: "none",
-                ...stijlen[status],
+                background:
+                  status === "correct"
+                    ? "#E8F5E9"
+                    : status === "gemist"
+                      ? "#F1F8E9"
+                      : status === "fout"
+                        ? "#FFEBEE"
+                        : status === "selected"
+                          ? "#E8F5E9"
+                          : "#F8F9FA",
+                border: "none",
+                boxShadow: "none",
+                outline: "1px solid transparent",
               }}
             >
-              {/* Radio/checkbox indicator */}
+              {/* Letter indicator */}
               <div
                 style={{
-                  width: "18px",
-                  height: "18px",
-                  borderRadius: meerdere ? "4px" : "50%",
-                  border: `2px solid ${status === "idle" ? "#DADCE0" : status === "selected" ? "#43A047" : status === "correct" || status === "gemist" ? "#2E7D32" : "#C62828"}`,
+                  width: "28px",
+                  height: "28px",
+                  borderRadius: "50%",
                   background:
-                    status === "correct"
+                    status === "correct" || status === "selected"
                       ? "#2E7D32"
                       : status === "fout"
                         ? "#C62828"
-                        : status === "selected"
-                          ? "#43A047"
-                          : "white",
+                        : status === "gemist"
+                          ? "#A5D6A7"
+                          : "#E0E0E0",
+                  color: status === "idle" ? "#757575" : "white",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
                   flexShrink: 0,
                   transition: "all 0.12s",
                 }}
               >
-                {(status === "correct" || status === "selected") && (
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+                {status === "correct" || status === "selected" ? (
+                  <svg width="12" height="12" viewBox="0 0 10 10" fill="white">
                     <path
                       d="M1.5 5L4 7.5L8.5 2.5"
                       stroke="white"
-                      strokeWidth="1.5"
+                      strokeWidth="1.8"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       fill="none"
                     />
                   </svg>
-                )}
-                {status === "fout" && (
-                  <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+                ) : status === "fout" ? (
+                  <svg width="12" height="12" viewBox="0 0 10 10" fill="white">
                     <path
                       d="M2 2L8 8M8 2L2 8"
                       stroke="white"
-                      strokeWidth="1.5"
+                      strokeWidth="1.8"
                       strokeLinecap="round"
                     />
                   </svg>
+                ) : (
+                  letters[index] || index + 1
                 )}
               </div>
-              <span style={{ fontSize: "14px", lineHeight: 1.5 }}>
+              <span
+                style={{
+                  fontSize: "14px",
+                  lineHeight: 1.6,
+                  color:
+                    status === "correct"
+                      ? "#2E7D32"
+                      : status === "fout"
+                        ? "#C62828"
+                        : status === "gemist"
+                          ? "#388E3C"
+                          : status === "selected"
+                            ? "#2E7D32"
+                            : "#1A1A1A",
+                  fontWeight: status === "idle" ? 400 : 500,
+                  flex: 1,
+                }}
+              >
                 {antwoord.tekst}
               </span>
               {status === "gemist" && (
                 <span
-                  style={{
-                    marginLeft: "auto",
-                    fontSize: "12px",
-                    color: "#2E7D32",
-                  }}
+                  style={{ fontSize: "12px", color: "#2E7D32", flexShrink: 0 }}
                 >
-                  ✓ correct antwoord
+                  ✓ correct
                 </span>
               )}
             </div>
@@ -216,6 +215,28 @@ function MeerkeuzVraag({
             </div>
           );
         })()}
+      {/* Onderbouwing */}
+      {toonAntwoord && vraag.onderbouwing && (
+        <div
+          style={{
+            marginTop: "8px",
+            padding: "12px 16px",
+            borderRadius: "8px",
+            background: "#F5F5F5",
+            border: "1px solid #E0E0E0",
+            fontSize: "13px",
+            color: "#5F6368",
+            lineHeight: 1.6,
+          }}
+        >
+          <span
+            style={{ fontWeight: 600, display: "block", marginBottom: "4px" }}
+          >
+            Onderbouwing:
+          </span>
+          <span>{vraag.onderbouwing}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -801,7 +822,7 @@ export default function QuizContainer() {
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.06em",
-              color: "#9E9E9E",
+              color: "#2E7D32",
               marginBottom: "2px",
             }}
           >
@@ -892,15 +913,16 @@ export default function QuizContainer() {
             key={vraag.id}
             style={{
               background: "white",
-              borderRadius: "10px",
-              border: "1px solid #DADCE0",
+              borderRadius: "16px",
+              border: "none",
               overflow: "hidden",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
             }}
           >
             {/* Vraag header */}
             <div
               style={{
-                padding: "12px 20px",
+                padding: "24px 28px",
                 borderBottom: "1px solid #DADCE0",
                 display: "flex",
                 alignItems: "center",
@@ -927,30 +949,15 @@ export default function QuizContainer() {
               </span>
               <p
                 style={{
-                  fontSize: "0.85rem",
+                  fontSize: "0.90rem",
                   fontWeight: 600,
                   color: "#1A1A1A",
                   flex: 1,
+                  lineHeight: 1.6,
                 }}
               >
                 {vraag.vraag}
               </p>
-              <span
-                style={{
-                  fontSize: "0.7rem",
-                  fontWeight: 600,
-                  padding: "2px 8px",
-                  borderRadius: "100px",
-                  background: vraag.type === "open" ? "#F5F5F5" : "#E8F5E9",
-                  color: vraag.type === "open" ? "#9E9E9E" : "#2E7D32",
-                }}
-              >
-                {vraag.type === "open"
-                  ? "Open"
-                  : vraag.meerdere_correct
-                    ? "Meerdere correct"
-                    : "Meerkeuze"}
-              </span>
             </div>
 
             {/* Vraag inhoud */}

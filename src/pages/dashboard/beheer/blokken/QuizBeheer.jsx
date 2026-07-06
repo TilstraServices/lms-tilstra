@@ -229,11 +229,16 @@ function VraagBewerken({ vraag, onHerlaad, onVerwijder }) {
   const [meerdereMogelijk, setMeerdereMogelijk] = useState(
     vraag.meerdere_correct || false,
   );
+  const [onderbouwing, setOnderbouwing] = useState(vraag.onderbouwing || "");
 
   async function slaVraagOp() {
     await supabase
       .from("vragen")
-      .update({ vraag: vraagtekst, meerdere_correct: meerdereMogelijk })
+      .update({
+        vraag: vraagtekst,
+        meerdere_correct: meerdereMogelijk,
+        onderbouwing,
+      })
       .eq("id", vraag.id);
 
     for (const antwoord of antwoorden) {
@@ -700,7 +705,44 @@ function VraagBewerken({ vraag, onHerlaad, onVerwijder }) {
           />
         </>
       )}
-
+      {vraag.type === "meerkeuze" && (
+        <>
+          <label
+            style={{
+              fontSize: "0.82rem",
+              fontWeight: 600,
+              color: "var(--grijs-700)",
+              display: "block",
+              marginBottom: "6px",
+              marginTop: "16px",
+            }}
+          >
+            Onderbouwing{" "}
+            <span style={{ fontWeight: 400, color: "var(--grijs-500)" }}>
+              (optioneel — wordt getoond bij toon antwoord)
+            </span>
+          </label>
+          <textarea
+            value={onderbouwing}
+            onChange={(e) => {
+              setOnderbouwing(e.target.value);
+              setOpgeslagen(false);
+            }}
+            placeholder="Leg uit waarom dit het correcte antwoord is..."
+            style={{
+              width: "100%",
+              padding: "9px 12px",
+              borderRadius: "8px",
+              border: "1px solid var(--grijs-200)",
+              marginBottom: "16px",
+              fontFamily: "Inter, sans-serif",
+              fontSize: "0.85rem",
+              resize: "vertical",
+              minHeight: "80px",
+            }}
+          />
+        </>
+      )}
       <button
         className="knop knop-primair"
         style={{ fontSize: "0.82rem" }}
