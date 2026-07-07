@@ -379,15 +379,9 @@ function ModuleRij({
               <VraagIcoon size={12} /> {quizScore}%
             </p>
           )}
-          {actief &&
-            score === null &&
-            score === undefined &&
-            quizScore === null &&
-            quizScore === undefined && (
-              <p style={{ fontSize: "0.85rem", color: "var(--grijs-300)" }}>
-                —
-              </p>
-            )}
+          {actief && score === undefined && quizScore === undefined && (
+            <p style={{ fontSize: "0.85rem", color: "var(--grijs-300)" }}>—</p>
+          )}
         </div>
         {voortgang !== undefined ? (
           <span
