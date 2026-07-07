@@ -116,8 +116,13 @@ const stijlen = {
   },
   subLabel: { fontWeight: "400", textTransform: "none" },
   rij: { borderBottom: "1px solid #eee" },
-  indicatorTd: { padding: "10px 16px", fontSize: "0.875rem", color: "#616161" },
-  scoreTd: { padding: "10px 16px", textAlign: "center" },
+  indicatorTd: {
+    padding: "10px 16px",
+    fontSize: "0.875rem",
+    color: "#616161",
+    width: "50%",
+  },
+  scoreTd: { padding: "10px 16px", textAlign: "center", width: "25%" },
   scoreSelector: { display: "flex", justifyContent: "center", gap: "4px" },
   scoreKnop: {
     width: "30px",

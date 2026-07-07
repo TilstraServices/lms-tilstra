@@ -52,9 +52,9 @@ function RadarChart({ scores }) {
           {
             label: "Evaluatie (begeleider)",
             data: evalData,
-            borderColor: "#C62828",
-            backgroundColor: "rgba(198,40,40,0.12)",
-            pointBackgroundColor: "#C62828",
+            borderColor: "#2E7D32",
+            backgroundColor: "rgba(46,125,50,0.12)",
+            pointBackgroundColor: "#2E7D32",
             pointRadius: 4,
             borderWidth: 2,
           },
@@ -104,7 +104,7 @@ function RadarChart({ scores }) {
           PTA (trainee)
         </div>
         <div style={stijlen.legendaItem}>
-          <div style={{ ...stijlen.legendaDot, background: "#C62828" }} />
+          <div style={{ ...stijlen.legendaDot, background: "#2E7D32" }} />
           Evaluatie (begeleider)
         </div>
       </div>
