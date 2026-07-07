@@ -86,6 +86,7 @@ function MeerkeuzVraag({
                 style={{
                   width: "28px",
                   height: "28px",
+                  minWidth: "28px",
                   borderRadius: "50%",
                   background:
                     status === "correct" || status === "selected"
@@ -143,7 +144,7 @@ function MeerkeuzVraag({
                           : status === "selected"
                             ? "#2E7D32"
                             : "#1A1A1A",
-                  fontWeight: status === "idle" ? 400 : 500,
+                  fontWeight: 500,
                   flex: 1,
                 }}
               >
