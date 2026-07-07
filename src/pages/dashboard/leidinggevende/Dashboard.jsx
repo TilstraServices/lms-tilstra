@@ -4,7 +4,7 @@ import { haalGebruikerOp } from "../../../lib/auth";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../DashboardLayout";
 import MatrixBlok from "./blokken/MatrixBlok";
-import HomeBlok from "./blokken/HomeBlok";
+import LeidinggevendeHomeBlok from "./blokken/LeidinggevendeHomeBlok";
 import MijnTraineesBlok from "./blokken/MijnTraineesBlok";
 import InstellingenBlok from "./blokken/InstellingenBlok";
 import { HouseIcoon } from "../../../assets/icons.jsx";
@@ -43,7 +43,7 @@ export default function LeidinggevendeDashboard() {
     {
       label: "Home",
       icoon: <HouseIcoon />,
-      blok: <HomeBlok email={email} />,
+      blok: <LeidinggevendeHomeBlok email={email} />,
       sectie: "Menu",
     },
     {

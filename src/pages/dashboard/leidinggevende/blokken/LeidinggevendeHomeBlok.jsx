@@ -633,7 +633,7 @@ function ActiviteitModal({ trainee, onSluit }) {
   );
 }
 
-export default function HomeBlok({ email }) {
+export default function LeidinggevendeHomeBlok({ email }) {
   const navigate = useNavigate();
   const [trainees, setTrainees] = useState([]);
   const [totaalAfgerond, setTotaalAfgerond] = useState(0);

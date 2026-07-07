@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../DashboardLayout";
 import MatrixBlok from "./blokken/MatrixBlok";
-import HomeBlok from "./blokken/HomeBlok";
+import TraineeHomeBlok from "./blokken/TraineeHomeBlok";
 import VoortgangBlok from "./blokken/VoortgangBlok";
 import LearningPathBlok from "./blokken/LearningPathBlok";
 import InstellingenBlok from "./blokken/InstellingenBlok";
@@ -48,7 +48,7 @@ export default function TraineeDashboard() {
     {
       label: "Home",
       icoon: <HouseIcoon />,
-      blok: <HomeBlok email={email} naam={naam} />,
+      blok: <TraineeHomeBlok email={email} naam={naam} />,
       sectie: "Menu",
     },
     {

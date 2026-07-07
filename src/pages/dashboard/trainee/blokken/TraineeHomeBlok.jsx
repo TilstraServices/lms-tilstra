@@ -47,7 +47,7 @@ function Smiley({ niveau, size = 32, kleur = "currentColor" }) {
   );
 }
 
-export default function HomeBlok({ email, naam }) {
+export default function TraineeHomeBlok({ email, naam }) {
   const [evaluatie, setEvaluatie] = useState(null);
   const [aantalBevestigingen, setAantalBevestigingen] = useState(0);
   const [huidigModule, setHuidigModule] = useState(null);
