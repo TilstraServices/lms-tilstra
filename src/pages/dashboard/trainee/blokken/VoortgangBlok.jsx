@@ -64,6 +64,8 @@ function HoofdstukRij({ hoofdstuk, email, cat }) {
   const [open, setOpen] = useState(false);
   const [paragrafen, setParagrafen] = useState([]);
   const [scores, setScores] = useState([]);
+  const [quizen, setQuizen] = useState([]);
+  const [quizScores, setQuizScores] = useState({});
   const [geladen, setGeladen] = useState(false);
   const [laden, setLaden] = useState(false);
 
@@ -75,14 +77,23 @@ function HoofdstukRij({ hoofdstuk, email, cat }) {
     setLaden(true);
     setOpen(true);
 
-    const { data: paragraafData } = await supabase
-      .from("paragrafen")
-      .select("id, naam, volgorde")
-      .eq("hoofdstuk_id", hoofdstuk.id)
-      .order("volgorde");
+    const [{ data: paragraafData }, { data: quizData }] = await Promise.all([
+      supabase
+        .from("paragrafen")
+        .select("id, naam, volgorde")
+        .eq("hoofdstuk_id", hoofdstuk.id)
+        .order("volgorde"),
+      supabase
+        .from("quizen")
+        .select("id, naam, volgorde")
+        .eq("hoofdstuk_id", hoofdstuk.id)
+        .order("volgorde"),
+    ]);
+
+    if (paragraafData) setParagrafen(paragraafData);
+    if (quizData) setQuizen(quizData);
 
     if (paragraafData && paragraafData.length > 0) {
-      setParagrafen(paragraafData);
       const { data: opgaveData } = await supabase
         .from("opgaves")
         .select("id, paragraaf_id")
@@ -115,6 +126,24 @@ function HoofdstukRij({ hoofdstuk, email, cat }) {
       }
     }
 
+    if (quizData && quizData.length > 0) {
+      const { data: quizScoreData } = await supabase
+        .from("quiz_scores")
+        .select("quiz_id, score, poging_nummer")
+        .eq("trainee_email", email)
+        .in(
+          "quiz_id",
+          quizData.map((q) => q.id),
+        )
+        .order("poging_nummer", { ascending: false });
+
+      const laasteQuizScoresMap = {};
+      (quizScoreData || []).forEach((s) => {
+        if (!laasteQuizScoresMap[s.quiz_id]) laasteQuizScoresMap[s.quiz_id] = s;
+      });
+      setQuizScores(laasteQuizScoresMap);
+    }
+
     setGeladen(true);
     setLaden(false);
   }
@@ -122,12 +151,13 @@ function HoofdstukRij({ hoofdstuk, email, cat }) {
   const hoofdstukScores = scores.filter((s) =>
     paragrafen.some((p) => p.id === s.opgave?.paragraaf_id),
   );
+  const alleScores = [
+    ...hoofdstukScores.map((s) => s.score),
+    ...Object.values(quizScores).map((s) => s.score),
+  ];
   const hoofdstukGem =
-    hoofdstukScores.length > 0
-      ? Math.round(
-          hoofdstukScores.reduce((a, b) => a + b.score, 0) /
-            hoofdstukScores.length,
-        )
+    alleScores.length > 0
+      ? Math.round(alleScores.reduce((a, b) => a + b, 0) / alleScores.length)
       : null;
 
   return (
@@ -211,7 +241,7 @@ function HoofdstukRij({ hoofdstuk, email, cat }) {
 
       {/* Paragrafen met animatie */}
       <div className={"uitklap-container" + (open ? "" : " ingeklapt")}>
-        {paragrafen.length === 0 ? (
+        {paragrafen.length === 0 && quizen.length === 0 ? (
           <div
             style={{
               padding: "10px 20px 10px 48px",
@@ -219,16 +249,83 @@ function HoofdstukRij({ hoofdstuk, email, cat }) {
               color: "var(--grijs-400)",
             }}
           >
-            Geen paragrafen in dit hoofdstuk.
+            Geen inhoud in dit hoofdstuk.
           </div>
         ) : (
-          paragrafen.map((paragraaf) => (
-            <ParagraafRij
-              key={paragraaf.id}
-              paragraaf={paragraaf}
-              scores={scores}
-            />
-          ))
+          <>
+            {paragrafen.map((paragraaf) => (
+              <ParagraafRij
+                key={paragraaf.id}
+                paragraaf={paragraaf}
+                scores={scores}
+              />
+            ))}
+            {quizen.map((quiz) => {
+              const quizScore = quizScores[quiz.id];
+              return (
+                <div
+                  key={quiz.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    padding: "10px 20px 10px 48px",
+                    borderBottom: "1px solid var(--grijs-100)",
+                    background: "white",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "3px",
+                      height: "24px",
+                      borderRadius: "2px",
+                      background: cat.primair,
+                      opacity: 0.5,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <p
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "var(--grijs-700)",
+                      flex: 1,
+                    }}
+                  >
+                    {quiz.naam}
+                  </p>
+                  <span
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      borderRadius: "50px",
+                      background: "#E8F5E9",
+                      color: "#2E7D32",
+                    }}
+                  >
+                    Quiz
+                  </span>
+                  {quizScore ? (
+                    <span
+                      style={{
+                        fontSize: "0.82rem",
+                        fontWeight: 600,
+                        color: quizScore.score >= 70 ? "#2E7D32" : "#C62828",
+                      }}
+                    >
+                      {quizScore.score}%
+                    </span>
+                  ) : (
+                    <span
+                      style={{ fontSize: "0.78rem", color: "var(--grijs-300)" }}
+                    >
+                      Niet gedaan
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
     </div>
@@ -266,7 +363,7 @@ function ModuleRij({
   }, [open, hoofdstukkenGeladen, module.id]);
 
   return (
-    <div style={{ borderBottom: "1px solid var(--grijs-200)" }}>
+    <div style={{ borderBottom: "3px solid var(--grijs-200)" }}>
       <div
         onClick={onToggle}
         style={{
@@ -356,7 +453,7 @@ function ModuleRij({
         ) : (
           <div style={{ width: "100px", flexShrink: 0 }} />
         )}
-        <div style={{ width: "80px", flexShrink: 0, textAlign: "right" }}>
+        <div style={{ width: "60px", flexShrink: 0, textAlign: "right" }}>
           {score !== null && score !== undefined && (
             <p
               style={{
@@ -825,7 +922,7 @@ export default function VoortgangBlok({ email }) {
           letterSpacing: "0.06em",
           color: "var(--grijs-500)",
           width: "110px",
-          textAlign: "center",
+          textAlign: "right",
         }}
       >
         Type
