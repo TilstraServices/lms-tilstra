@@ -323,11 +323,21 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
     geselecteerd?.sjabloon || geselecteerd?.type || "",
   );
   const [toonLinkPopup, setToonLinkPopup] = useState(false);
+  const [duur, setDuur] = useState(geselecteerd?.duur || "");
+  const [categorie, setCategorie] = useState(geselecteerd?.categorie || "");
+  const [nieuweCategorie, setNieuweCategorie] = useState("");
 
   async function slaOp() {
     if (!naam.trim()) return;
     const updates = { naam };
-    if (geselecteerd.type === "module") updates.beschrijving = beschrijving;
+    if (geselecteerd.type === "module") {
+      updates.beschrijving = beschrijving;
+      updates.duur = duur ? parseInt(duur) : null;
+      updates.categorie =
+        categorie === "nieuw"
+          ? nieuweCategorie.trim() || null
+          : categorie || null;
+    }
     if (geselecteerd.type === "opgave") {
       updates.iframe_url = iframeUrl;
       updates.type = opgaveType;
@@ -641,6 +651,53 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                   marginBottom: "6px",
                 }}
               >
+                Categorie
+              </label>
+              <select
+                value={categorie}
+                onChange={(e) => setCategorie(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--grijs-200)",
+                  marginBottom: "8px",
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "0.85rem",
+                  background: "white",
+                }}
+              >
+                <option value="">Geen categorie</option>
+                <option value="BKL">BKL</option>
+                <option value="NMBRS">NMBRS</option>
+                <option value="nieuw">+ Nieuwe categorie</option>
+              </select>
+              {categorie === "nieuw" && (
+                <input
+                  type="text"
+                  value={nieuweCategorie}
+                  onChange={(e) => setNieuweCategorie(e.target.value)}
+                  placeholder="Naam van de nieuwe categorie"
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--grijs-200)",
+                    marginBottom: "8px",
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "0.85rem",
+                  }}
+                />
+              )}
+              <label
+                style={{
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  color: "var(--grijs-700)",
+                  display: "block",
+                  marginBottom: "6px",
+                }}
+              >
                 Beschrijving
               </label>
               <input
@@ -648,6 +705,36 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                 value={beschrijving}
                 onChange={(e) => setBeschrijving(e.target.value)}
                 placeholder="Optioneel"
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--grijs-200)",
+                  marginBottom: "12px",
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "0.85rem",
+                }}
+              />
+              <label
+                style={{
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  color: "var(--grijs-700)",
+                  display: "block",
+                  marginBottom: "6px",
+                }}
+              >
+                Duur{" "}
+                <span style={{ fontWeight: 400, color: "var(--grijs-500)" }}>
+                  (uren)
+                </span>
+              </label>
+              <input
+                type="number"
+                value={duur}
+                onChange={(e) => setDuur(e.target.value)}
+                placeholder="Bijv. 40"
+                min="0"
                 style={{
                   width: "100%",
                   padding: "9px 12px",
@@ -1546,10 +1633,29 @@ export default function ModulesBoom() {
 function NieuweModuleFormulier({ onHerlaad, onAnnuleren }) {
   const [naam, setNaam] = useState("");
   const [beschrijving, setBeschrijving] = useState("");
+  const [duur, setDuur] = useState("");
+  const [categorie, setCategorie] = useState("");
+  const [nieuweCategorie, setNieuweCategorie] = useState("");
 
   async function voegToe() {
     if (!naam.trim()) return;
-    await supabase.from("modules").insert({ naam, beschrijving, volgorde: 0 });
+    const definitieveCategorie =
+      categorie === "nieuw" ? nieuweCategorie.trim() : categorie || null;
+    const { data: bestaande } = await supabase
+      .from("modules")
+      .select("volgorde")
+      .eq("categorie", definitieveCategorie)
+      .order("volgorde", { ascending: false })
+      .limit(1);
+    const volgorde =
+      bestaande && bestaande.length > 0 ? bestaande[0].volgorde + 1 : 0;
+    await supabase.from("modules").insert({
+      naam,
+      beschrijving,
+      duur: duur ? parseInt(duur) : null,
+      volgorde,
+      categorie: definitieveCategorie,
+    });
     onHerlaad();
     onAnnuleren();
   }
@@ -1605,6 +1711,53 @@ function NieuweModuleFormulier({ onHerlaad, onAnnuleren }) {
           marginBottom: "6px",
         }}
       >
+        Categorie
+      </label>
+      <select
+        value={categorie}
+        onChange={(e) => setCategorie(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "9px 12px",
+          borderRadius: "8px",
+          border: "1px solid var(--grijs-200)",
+          marginBottom: "8px",
+          fontFamily: "Inter, sans-serif",
+          fontSize: "0.85rem",
+          background: "white",
+        }}
+      >
+        <option value="">Geen categorie</option>
+        <option value="BKL">BKL</option>
+        <option value="NMBRS">NMBRS</option>
+        <option value="nieuw">+ Nieuwe categorie</option>
+      </select>
+      {categorie === "nieuw" && (
+        <input
+          type="text"
+          value={nieuweCategorie}
+          onChange={(e) => setNieuweCategorie(e.target.value)}
+          placeholder="Naam van de nieuwe categorie"
+          style={{
+            width: "100%",
+            padding: "9px 12px",
+            borderRadius: "8px",
+            border: "1px solid var(--grijs-200)",
+            marginBottom: "8px",
+            fontFamily: "Inter, sans-serif",
+            fontSize: "0.85rem",
+          }}
+        />
+      )}
+      <label
+        style={{
+          fontSize: "0.82rem",
+          fontWeight: 600,
+          color: "var(--grijs-700)",
+          display: "block",
+          marginBottom: "6px",
+        }}
+      >
         Beschrijving
       </label>
       <input
@@ -1612,6 +1765,36 @@ function NieuweModuleFormulier({ onHerlaad, onAnnuleren }) {
         value={beschrijving}
         onChange={(e) => setBeschrijving(e.target.value)}
         placeholder="Optioneel"
+        style={{
+          width: "100%",
+          padding: "9px 12px",
+          borderRadius: "8px",
+          border: "1px solid var(--grijs-200)",
+          marginBottom: "14px",
+          fontFamily: "Inter, sans-serif",
+          fontSize: "0.85rem",
+        }}
+      />
+      <label
+        style={{
+          fontSize: "0.82rem",
+          fontWeight: 600,
+          color: "var(--grijs-700)",
+          display: "block",
+          marginBottom: "6px",
+        }}
+      >
+        Duur{" "}
+        <span style={{ fontWeight: 400, color: "var(--grijs-500)" }}>
+          (uren)
+        </span>
+      </label>
+      <input
+        type="number"
+        value={duur}
+        onChange={(e) => setDuur(e.target.value)}
+        placeholder="Bijv. 40"
+        min="0"
         style={{
           width: "100%",
           padding: "9px 12px",

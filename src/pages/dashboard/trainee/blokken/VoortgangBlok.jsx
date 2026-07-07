@@ -356,7 +356,7 @@ function ModuleRij({
         ) : (
           <div style={{ width: "100px", flexShrink: 0 }} />
         )}
-        <div style={{ width: "110px", flexShrink: 0, textAlign: "right" }}>
+        <div style={{ width: "80px", flexShrink: 0, textAlign: "right" }}>
           {score !== null && score !== undefined && (
             <p
               style={{
@@ -492,7 +492,7 @@ function ModuleRij({
                 marginBottom: "4px",
               }}
             >
-              Duur
+              Gem. Duur
             </p>
             <p
               style={{
@@ -501,7 +501,7 @@ function ModuleRij({
                 color: "var(--grijs-900)",
               }}
             >
-              {module.duur || "—"}
+              {module.duur ? `${module.duur} uur` : "—"}
             </p>
           </div>
           <div
@@ -824,7 +824,8 @@ export default function VoortgangBlok({ email }) {
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           color: "var(--grijs-500)",
-          width: "60px",
+          width: "110px",
+          textAlign: "center",
         }}
       >
         Type
@@ -836,7 +837,8 @@ export default function VoortgangBlok({ email }) {
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           color: "var(--grijs-500)",
-          width: "100px",
+          width: "110px",
+          textAlign: "right",
         }}
       >
         Voortgang
@@ -848,8 +850,9 @@ export default function VoortgangBlok({ email }) {
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           color: "var(--grijs-500)",
-          width: "50px",
+          width: "60px",
           textAlign: "right",
+          flexShrink: 0,
         }}
       >
         Score

@@ -301,6 +301,8 @@ function ModuleRij({
             padding: "2px 8px",
             borderRadius: "50px",
             flexShrink: 0,
+            width: "60px",
+            textAlign: "center",
           }}
         >
           {cat.label}
@@ -328,7 +330,7 @@ function ModuleRij({
                 fontSize: "0.72rem",
                 color: "var(--grijs-500)",
                 marginTop: "2px",
-                textAlign: "right",
+                textAlign: "center",
               }}
             >
               {voortgang}%
@@ -337,7 +339,7 @@ function ModuleRij({
         ) : (
           <div style={{ width: "100px", flexShrink: 0 }} />
         )}
-        <div style={{ width: "110px", flexShrink: 0, textAlign: "right" }}>
+        <div style={{ width: "60px", flexShrink: 0, textAlign: "right" }}>
           {actief && score !== null && score !== undefined && (
             <p
               style={{
@@ -471,7 +473,7 @@ function ModuleRij({
                 marginBottom: "4px",
               }}
             >
-              Duur
+              Gem. Duur
             </p>
             <p
               style={{
@@ -480,7 +482,7 @@ function ModuleRij({
                 color: "var(--grijs-900)",
               }}
             >
-              {module.duur || "—"}
+              {module.duur ? `${module.duur} uur` : "—"}
             </p>
           </div>
           <div
@@ -827,7 +829,8 @@ function TraineeDetail({ trainee, onTerug }) {
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           color: "var(--grijs-500)",
-          width: "60px",
+          width: "110px",
+          textAlign: "right",
         }}
       >
         Type
@@ -839,7 +842,8 @@ function TraineeDetail({ trainee, onTerug }) {
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           color: "var(--grijs-500)",
-          width: "100px",
+          width: "110px",
+          textAlign: "right",
         }}
       >
         Voortgang
@@ -851,8 +855,9 @@ function TraineeDetail({ trainee, onTerug }) {
           textTransform: "uppercase",
           letterSpacing: "0.06em",
           color: "var(--grijs-500)",
-          width: "50px",
+          width: "80px",
           textAlign: "right",
+          flexShrink: 0,
         }}
       >
         Score

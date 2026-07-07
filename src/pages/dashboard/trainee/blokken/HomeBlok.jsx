@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../../lib/supabase";
+import { ParagraafIcoon, VraagIcoon } from "../../../../assets/icons.jsx";
 
 const NIVEAUS = [
   {
@@ -51,6 +52,7 @@ export default function HomeBlok({ email, naam }) {
   const [aantalBevestigingen, setAantalBevestigingen] = useState(0);
   const [huidigModule, setHuidigModule] = useState(null);
   const [moduleScore, setModuleScore] = useState(null);
+  const [moduleQuizScore, setModuleQuizScore] = useState(null);
   const [toonDropdown, setToonDropdown] = useState(false);
   const [nieuwNiveau, setNieuwNiveau] = useState(null);
   const [nieuweReden, setNieuweReden] = useState("");
@@ -102,7 +104,7 @@ export default function HomeBlok({ email, naam }) {
       .from("module_voortgang")
       .select("*, modules(naam, categorie)")
       .eq("trainee_email", email)
-      .order("voortgang", { ascending: false })
+      .order("bijgewerkt_op", { ascending: false })
       .limit(1);
 
     if (!voortgangData || voortgangData.length === 0) {
@@ -147,6 +149,33 @@ export default function HomeBlok({ email, naam }) {
             moduleScores.reduce((a, b) => a + b.score, 0) / moduleScores.length,
           );
           setModuleScore(gem);
+        }
+      }
+
+      // Quiz score voor deze module
+      const { data: quizScoreData } = await supabase
+        .from("quiz_scores")
+        .select(
+          "quiz_id, score, poging_nummer, quizen(hoofdstuk_id, hoofdstukken(module_id))",
+        )
+        .eq("trainee_email", email)
+        .order("poging_nummer", { ascending: false });
+
+      if (quizScoreData && quizScoreData.length > 0) {
+        const laasteQuizScoresMap = {};
+        quizScoreData.forEach((s) => {
+          if (!laasteQuizScoresMap[s.quiz_id])
+            laasteQuizScoresMap[s.quiz_id] = s;
+        });
+        const moduleQuizScores = Object.values(laasteQuizScoresMap).filter(
+          (s) => s.quizen?.hoofdstukken?.module_id === moduleId,
+        );
+        if (moduleQuizScores.length > 0) {
+          const gem = Math.round(
+            moduleQuizScores.reduce((a, b) => a + b.score, 0) /
+              moduleQuizScores.length,
+          );
+          setModuleQuizScore(gem);
         }
       }
     }
@@ -446,7 +475,7 @@ export default function HomeBlok({ email, naam }) {
                       fontFamily: "Inter, sans-serif",
                     }}
                   >
-                    + Nieuwe evaluatie
+                    + Update evaluatie
                   </button>
                 </div>
               </div>
@@ -815,20 +844,44 @@ export default function HomeBlok({ email, naam }) {
                     >
                       Gem. score
                     </p>
-                    <p
+                    <div
                       style={{
-                        fontSize: "1.3rem",
-                        fontWeight: 700,
-                        color:
-                          moduleScore !== null
-                            ? moduleScore >= 70
-                              ? "var(--groen)"
-                              : "var(--rood)"
-                            : "var(--grijs-500)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "2px",
                       }}
                     >
-                      {moduleScore !== null ? `${moduleScore}%` : "—"}
-                    </p>
+                      <p
+                        style={{
+                          fontSize: "0.82rem",
+                          fontWeight: 600,
+                          color:
+                            moduleScore !== null
+                              ? moduleScore >= 70
+                                ? "var(--groen)"
+                                : "var(--rood)"
+                              : "var(--grijs-400)",
+                        }}
+                      >
+                        <ParagraafIcoon size={12} />{" "}
+                        {moduleScore !== null ? `${moduleScore}%` : "—"}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: "0.82rem",
+                          fontWeight: 600,
+                          color:
+                            moduleQuizScore !== null
+                              ? moduleQuizScore >= 70
+                                ? "var(--groen)"
+                                : "var(--rood)"
+                              : "var(--grijs-400)",
+                        }}
+                      >
+                        <VraagIcoon size={12} />{" "}
+                        {moduleQuizScore !== null ? `${moduleQuizScore}%` : "—"}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
