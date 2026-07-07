@@ -51,6 +51,26 @@ function GebruikerRij({ gebruiker, onOpslaan, onVerwijder }) {
             {gebruiker.rol}
           </span>
         </td>
+        <td>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              padding: "2px 8px",
+              borderRadius: "50px",
+              background: gebruiker.auth_id ? "#E8F5E9" : "#FFEBEE",
+              color: gebruiker.auth_id ? "#2E7D32" : "#C62828",
+            }}
+          >
+            <span style={{ fontSize: "0.6rem" }}>
+              {gebruiker.auth_id ? "●" : "○"}
+            </span>
+            {gebruiker.auth_id ? "Actief" : "Geen auth"}
+          </span>
+        </td>
         <td style={{ fontSize: "0.82rem", color: "var(--grijs-500)" }}>
           {new Date(gebruiker.aangemaakt_op).toLocaleDateString("nl-NL", {
             day: "numeric",
@@ -940,7 +960,7 @@ export default function GebruikersBeheerBlok() {
     const [gebruikersRes, koppelingenRes] = await Promise.all([
       supabase
         .from("gebruikers")
-        .select("naam, email, rol, aangemaakt_op")
+        .select("naam, email, rol, aangemaakt_op, auth_id")
         .order("aangemaakt_op", { ascending: false }),
       supabase.from("koppeling").select("trainee_email, leidinggevende_email"),
     ]);
@@ -1217,6 +1237,7 @@ export default function GebruikersBeheerBlok() {
                 <th style={{ paddingLeft: "24px" }}>Naam</th>
                 <th>Email</th>
                 <th>Rol</th>
+                <th>Auth</th>
                 <th>Aangemaakt op</th>
               </tr>
             </thead>
@@ -1263,6 +1284,7 @@ export default function GebruikersBeheerBlok() {
                 <th style={{ paddingLeft: "24px" }}>Naam</th>
                 <th>Email</th>
                 <th>Rol</th>
+                <th>Auth</th>
                 <th>Aangemaakt op</th>
               </tr>
             </thead>
