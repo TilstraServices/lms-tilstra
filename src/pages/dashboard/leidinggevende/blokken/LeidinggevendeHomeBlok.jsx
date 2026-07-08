@@ -940,7 +940,7 @@ export default function LeidinggevendeHomeBlok({ email }) {
               <thead>
                 <tr>
                   <th style={{ paddingLeft: "24px" }}>Naam</th>
-                  <th>Actieve module</th>
+                  <th style={{ textAlign: "center" }}>Actieve module</th>
                   <th>Voortgang</th>
                   <th>Opgave score</th>
                   <th>Quiz score</th>
@@ -1001,7 +1001,7 @@ export default function LeidinggevendeHomeBlok({ email }) {
                           </div>
                         </div>
                       </td>
-                      <td>
+                      <td style={{ textAlign: "center" }}>
                         {m ? (
                           <span
                             style={{
