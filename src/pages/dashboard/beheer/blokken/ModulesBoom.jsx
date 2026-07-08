@@ -803,7 +803,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                 onChange={(e) => {
                   setIframeUrl(e.target.value);
                 }}
-                placeholder="http://localhost:5173/lms-tilstra/..." // <- Vervangen wanneer live //
+                placeholder="https://tilstraservices.github.io/lms-tilstra/..."
                 style={{
                   width: "100%",
                   padding: "9px 12px",
@@ -942,7 +942,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               <div style={{ display: "flex", gap: "6px" }}>
                 <input
                   readOnly
-                  value={`http://localhost:5173/lms-tilstra/quiz?id=${geselecteerd.id}`}
+                  value={`https://tilstraservices.github.io/lms-tilstra/quiz?id=${geselecteerd.id}`}
                   style={{
                     flex: 1,
                     padding: "7px 10px",
@@ -958,7 +958,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(
-                      `http://localhost:5173/lms-tilstra/quiz?id=${geselecteerd.id}`,
+                      `https://tilstraservices.github.io/lms-tilstra/quiz?id=${geselecteerd.id}`,
                     );
                     setToonLinkPopup(false);
                   }}
@@ -1096,7 +1096,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                   <div style={{ display: "flex", gap: "6px" }}>
                     <input
                       readOnly
-                      value={`http://localhost:5173/lms-tilstra/lms-tilstra/paragraaf?id=${geselecteerd.id}`}
+                      value={`https://tilstraservices.github.io/lms-tilstra/paragraaf?id=${geselecteerd.id}`}
                       style={{
                         flex: 1,
                         padding: "7px 10px",
@@ -1112,7 +1112,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(
-                          `http://localhost:5173/lms-tilstra/lms-tilstra/paragraaf?id=${geselecteerd.id}`,
+                          `https://tilstraservices.github.io/lms-tilstra/paragraaf?id=${geselecteerd.id}`,
                         );
                         setToonLinkPopup(false);
                       }}
