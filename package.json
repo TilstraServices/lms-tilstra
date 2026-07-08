@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build && echo > dist/.nojekyll && copy dist\\index.html dist\\404.html",
-    "deploy": "gh-pages -d dist"
+    "deploy": "vite build && gh-pages -d dist"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
