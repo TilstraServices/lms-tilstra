@@ -383,6 +383,57 @@ export default function OpgaveContainer() {
             {paragraafNaam}
           </p>
         </div>
+
+        {/* Ingelogde gebruiker */}
+        <div style={{ textAlign: "center" }}>
+          <p
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "#9E9E9E",
+              marginBottom: "2px",
+            }}
+          >
+            Ingelogd als
+          </p>
+          <p
+            style={{
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: "#1A1A1A",
+            }}
+          >
+            {email || "—"}
+          </p>
+        </div>
+
+        {/* Opgave teller */}
+        <div style={{ textAlign: "right" }}>
+          <p
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "#9E9E9E",
+              marginBottom: "2px",
+            }}
+          >
+            Opgaves
+          </p>
+          <p
+            style={{
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              color: "#1A1A1A",
+            }}
+          >
+            {opgaves.length} {opgaves.length === 1 ? "opgave" : "opgaves"}
+          </p>
+        </div>
+
         {gecontroleerd && gemiddeldeScore !== null && (
           <div style={{ textAlign: "right" }}>
             <p
@@ -416,6 +467,8 @@ export default function OpgaveContainer() {
           display: "flex",
           flexDirection: "column",
           gap: "16px",
+          maxWidth: "800px",
+          margin: "0 auto",
         }}
       >
         {opgaves.map((opgave, index) => (

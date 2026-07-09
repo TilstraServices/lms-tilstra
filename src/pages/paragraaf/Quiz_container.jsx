@@ -833,6 +833,30 @@ export default function QuizContainer() {
             {quiz?.naam || "Quiz"}
           </p>
         </div>
+        {/* Ingelogde gebruiker */}
+        <div style={{ textAlign: "center" }}>
+          <p
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "#9E9E9E",
+              marginBottom: "2px",
+            }}
+          >
+            Ingelogd als
+          </p>
+          <p
+            style={{
+              fontSize: "0.85rem",
+              fontWeight: 600,
+              color: "#1A1A1A",
+            }}
+          >
+            {email || "—"}
+          </p>
+        </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           {/* Vraag teller */}
