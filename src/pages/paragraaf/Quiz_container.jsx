@@ -889,8 +889,8 @@ export default function QuizContainer() {
           {gecontroleerd && score !== null && (
             <div
               style={{
-                background: score >= 70 ? "#E8F5E9" : "#FFEBEE",
-                border: `1px solid ${score >= 70 ? "#A5D6A7" : "#EF9A9A"}`,
+                background: score >= 55 ? "#E8F5E9" : "#FFEBEE",
+                border: `1px solid ${score >= 55 ? "#A5D6A7" : "#EF9A9A"}`,
                 borderRadius: "10px",
                 padding: "8px 16px",
                 textAlign: "center",
@@ -902,7 +902,7 @@ export default function QuizContainer() {
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
-                  color: score >= 70 ? "#2E7D32" : "#C62828",
+                  color: score >= 55 ? "#2E7D32" : "#C62828",
                   marginBottom: "2px",
                 }}
               >
@@ -912,7 +912,7 @@ export default function QuizContainer() {
                 style={{
                   fontSize: "1.5rem",
                   fontWeight: 700,
-                  color: score >= 70 ? "#2E7D32" : "#C62828",
+                  color: score >= 55 ? "#2E7D32" : "#C62828",
                 }}
               >
                 {score}%
