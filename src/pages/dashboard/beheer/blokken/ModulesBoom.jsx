@@ -979,56 +979,6 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
 
       {kindInfo && (
         <>
-          <p
-            style={{
-              fontSize: "0.7rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              color: "var(--grijs-500)",
-              marginBottom: "10px",
-            }}
-          >
-            {geselecteerd.type === "hoofdstuk"
-              ? "Paragrafen & Quiz"
-              : kindInfo.type + "en"}
-          </p>
-          {kinderen.length === 0 ? (
-            <p
-              style={{
-                fontSize: "0.82rem",
-                color: "var(--grijs-500)",
-                marginBottom: "12px",
-              }}
-            >
-              Nog geen items.
-            </p>
-          ) : (
-            <SleepLijst
-              kinderen={kinderen}
-              geselecteerd={geselecteerd}
-              onSelecteer={onSelecteer}
-              onHerlaad={() => onHerlaad(kindInfo.tabel)}
-              data={data}
-              kindInfo={kindInfo}
-            />
-          )}
-
-          <NieuwItemFormulier
-            geselecteerd={geselecteerd}
-            autoOpen={geselecteerd?.formulierOpen}
-            data={data}
-            onHerlaad={(tabel) => {
-              const tabelMap = {
-                module: "hoofdstukken",
-                hoofdstuk: "paragrafen",
-                paragraaf: "opgaves",
-              };
-              onHerlaad(
-                tabel || tabelMap[geselecteerd.type] || geselecteerd.tabel,
-              );
-            }}
-          />
           {geselecteerd.type === "paragraaf" && (
             <div
               style={{
@@ -1052,6 +1002,7 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
                   cursor: "pointer",
                   color: "var(--grijs-700)",
                   fontFamily: "Inter, sans-serif",
+                  marginBottom: "16px",
                 }}
               >
                 <svg
@@ -1126,6 +1077,59 @@ function Paneel({ geselecteerd, onHerlaad, data, onSelecteer }) {
               )}
             </div>
           )}
+
+          <p
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "var(--grijs-500)",
+              marginBottom: "10px",
+            }}
+          >
+            {geselecteerd.type === "hoofdstuk"
+              ? "Paragrafen & Quiz"
+              : geselecteerd.type === "paragraaf"
+                ? "Opgaven"
+                : kindInfo.type + "en"}
+          </p>
+          {kinderen.length === 0 ? (
+            <p
+              style={{
+                fontSize: "0.82rem",
+                color: "var(--grijs-500)",
+                marginBottom: "12px",
+              }}
+            >
+              Nog geen items.
+            </p>
+          ) : (
+            <SleepLijst
+              kinderen={kinderen}
+              geselecteerd={geselecteerd}
+              onSelecteer={onSelecteer}
+              onHerlaad={() => onHerlaad(kindInfo.tabel)}
+              data={data}
+              kindInfo={kindInfo}
+            />
+          )}
+
+          <NieuwItemFormulier
+            geselecteerd={geselecteerd}
+            autoOpen={geselecteerd?.formulierOpen}
+            data={data}
+            onHerlaad={(tabel) => {
+              const tabelMap = {
+                module: "hoofdstukken",
+                hoofdstuk: "paragrafen",
+                paragraaf: "opgaves",
+              };
+              onHerlaad(
+                tabel || tabelMap[geselecteerd.type] || geselecteerd.tabel,
+              );
+            }}
+          />
         </>
       )}
     </div>
